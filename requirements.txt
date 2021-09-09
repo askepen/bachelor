@@ -1,0 +1,6 @@
+soundfile # Windows backend for torchaudio
+# sox # Unix/MacOS backend for torchaudio
+numpy
+torch
+torchaudio 
+tqdm
