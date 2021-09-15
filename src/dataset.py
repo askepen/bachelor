@@ -7,7 +7,7 @@ from tqdm import tqdm
 from torch.utils.data import Dataset
 
 # Path to where the datasets will be stored
-DATA_DIR = "data"
+DATA_DIR = "../data"
 
 # We are using the "Noisy speech database for training speech enhancement 
 # algorithms and TTS models". Created by Cassia Valentini-Botinhao and 
@@ -58,6 +58,7 @@ class CompressedAudioDataset(Dataset):
         raise NotImplemented
 
     def __getitem__(self, index):
-        paths = os.listdir(os.path.join(self.data_path, "clean_trainset_56spk_wav"))
-        return paths[index]
+        dir = os.path.join(self.data_path, "clean_testset_wav")
+        paths = os.listdir(dir)
+        return os.path.join(dir, paths[index])
     
