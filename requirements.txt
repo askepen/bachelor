@@ -6,3 +6,4 @@ torchaudio
 tqdm
 matplotlib
 IPython
+joblib

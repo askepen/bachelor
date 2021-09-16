@@ -19,3 +19,7 @@
 -   Noisy speech database for training speech enhancement algorithms and TTS models
 
     https://datashare.ed.ac.uk/handle/10283/2791
+
+- Parallelizing the GSM Speech Compression Algorithm on Raw
+    http://dspace.mit.edu/bitstream/handle/1721.1/8089/51213825-MIT.pdf;sequence=2
+
