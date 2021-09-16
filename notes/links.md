@@ -6,3 +6,5 @@
 
 - Voice datasets: https://github.com/jim-schwoebel/voice_datasets
 
+- Sox effects: http://sox.sourceforge.net/sox.html
+
