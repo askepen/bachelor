@@ -1,28 +1,36 @@
 import os
+from typing import Tuple
 from urllib.request import urlretrieve
 from zipfile import ZipFile
-from joblib import Parallel, delayed
-import torch
-from typing import Tuple
 
+import torch
 import torchaudio
+from joblib import Parallel, delayed
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
 # Path to where the datasets will be stored
 DATA_DIR = "../data"
 
-# We are using the "Noisy speech database for training speech enhancement
-# algorithms and TTS models". Created by Cassia Valentini-Botinhao and
-# published by the University of Edinburgh.
-#
-# More info here: https://datashare.ed.ac.uk/handle/10283/2791
+# Links to the base dataset 
 CLEAN_TRAINSET_56SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_56spk_wav.zip?sequence=3&isAllowed=y"
 CLEAN_TRAINSET_28SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_28spk_wav.zip?sequence=2&isAllowed=y"
 CLEAN_TESTSET_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_testset_wav.zip?sequence=1&isAllowed=y"
 
 
 class CompressedAudioDataset(Dataset):
+    """
+    A dataset consisting of pairs of compressed and uncompressed speech samples. 
+    The compression used is GSM compression in order to mimic a phone line a 
+    closely as possible.
+
+    For the base dataset, we are using the "Noisy speech database for training 
+    speech enhancement algorithms and TTS models" created by Cassia Valentini-Botinhao 
+    and published by the University of Edinburgh.
+    
+    More info about the base dataset here: https://datashare.ed.ac.uk/handle/10283/2791
+    """
+
     def __init__(self, test=False, force_download=False, force_generate=False) -> None:
         super().__init__()
 
@@ -40,6 +48,12 @@ class CompressedAudioDataset(Dataset):
         self._get_gsm_samples(force_generate)
 
     def _get_wav_samples(self, force_download=False):
+        """
+        Downloads and extracts the base dataset into a fodler named `wav` in the data directory.
+        ### Parameters
+        - `force_download`: If `True` it will download everything from source and extract it 
+                            into the `wav` folder, remove everything previously the `wav` folder.
+        """
 
         if force_download and os.path.exists(self.data_path_wav):
             os.remove(self.data_path_wav)
@@ -76,19 +90,35 @@ class CompressedAudioDataset(Dataset):
             ]
             os.rename(folders[0], "wav")
 
-    def _get_gsm_samples(self, force_generate=False):
+    def _get_gsm_samples(self, force_generate=False, n_jobs=-1):
+        """
+        Makes a compressed version of every file in the `wav`-folder and puts 
+        the in a new folder named `gsm` in the data directory.
+        ### Parameters
+        - `force_generate`: If `True` it will generate new compressed versions 
+                            of every file in the `wav` folder, removing any 
+                            previous files in the `gsm`-folder before.  
+        - `n_jobs`: Amount of processes to use when compressing audio files
+        """
         if force_generate and os.path.exists(self.data_path_gsm):
             os.remove(self.data_path_gsm)
 
         # Generate gsm samples if we do not have them
         if not (os.path.exists(self.data_path_gsm)) or force_generate:
             os.mkdir(self.data_path_gsm)
-            _ = Parallel(n_jobs=-1)(map(
-                delayed(self._generate_gsm_sample),
-                tqdm(os.listdir(self.data_path_wav), desc="Generating GSM samples"),
-            ))
+            _ = Parallel(n_jobs=n_jobs)(
+                map(
+                    delayed(self._generate_gsm_sample),
+                    tqdm(os.listdir(self.data_path_wav), desc="Generating GSM samples"),
+                )
+            )
 
     def _generate_gsm_sample(self, file_name):
+        """
+        Apply GSM compression to a file from the `wav`-folder and save it to the `gsm`-folder
+        ### Parameters
+        - `file_name`: name of the file in the `wav`-folder to apply compression to
+        """
         speech, sample_rate = torchaudio.sox_effects.apply_effects_file(
             os.path.join(self.data_path_wav, file_name),
             effects=[
@@ -114,8 +144,19 @@ class CompressedAudioDataset(Dataset):
         dir = os.path.join(self.data_path_wav)
         return len(os.listdir(dir))
 
-    def __getitem__(self, index) -> Tuple[torch.Tensor, int]:
+    def __getitem__(self, index) -> Tuple[Tuple[torch.Tensor, int]]:
+        """
+        ### Returns
+        `((gsm_tensor, gsm_sr), (wav_tensor, wav_sr))`:
+        A tuple of the compressed speech audio + sample rate and the corresponding target audio + sample rate
+        """
         wav_paths = os.listdir(self.data_path_wav)
         file_name = wav_paths[index]
+
         gsm_path = os.path.join(self.data_path_gsm, file_name)
-        return torchaudio.load(gsm_path, format="gsm")
+        wav_path = os.path.join(self.data_path_wav, file_name)
+
+        gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
+        wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
+
+        return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
