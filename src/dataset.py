@@ -1,18 +1,23 @@
+from functools import cache
 import os
-from typing import Tuple
+from typing import Tuple, List
 from urllib.request import urlretrieve
 from zipfile import ZipFile
+import numpy as np
 
 import torch
 import torchaudio
 from joblib import Parallel, delayed
 from torch.utils.data import Dataset
+from torchaudio import transforms as T
 from tqdm import tqdm
+
+from audio_utils import plot_specgram
 
 # Path to where the datasets will be stored
 DATA_DIR = "../data"
 
-# Links to the base dataset 
+# Links to the base dataset
 CLEAN_TRAINSET_56SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_56spk_wav.zip?sequence=3&isAllowed=y"
 CLEAN_TRAINSET_28SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_28spk_wav.zip?sequence=2&isAllowed=y"
 CLEAN_TESTSET_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_testset_wav.zip?sequence=1&isAllowed=y"
@@ -20,26 +25,35 @@ CLEAN_TESTSET_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clea
 
 class CompressedAudioDataset(Dataset):
     """
-    A dataset consisting of pairs of compressed and uncompressed speech samples. 
-    The compression used is GSM compression in order to mimic a phone line a 
+    A dataset consisting of pairs of compressed and uncompressed speech samples.
+    The compression used is GSM compression in order to mimic a phone line a
     closely as possible.
 
-    For the base dataset, we are using the "Noisy speech database for training 
-    speech enhancement algorithms and TTS models" created by Cassia Valentini-Botinhao 
+    For the base dataset, we are using the "Noisy speech database for training
+    speech enhancement algorithms and TTS models" created by Cassia Valentini-Botinhao
     and published by the University of Edinburgh.
-    
+
     More info about the base dataset here: https://datashare.ed.ac.uk/handle/10283/2791
     """
 
-    def __init__(self, test=False, force_download=False, force_generate=False) -> None:
+    def __init__(
+        self,
+        data_dir: str = DATA_DIR,
+        test: bool = False,
+        force_download: bool = False,
+        force_generate: bool = False,
+        transform: torch.nn.Module = None,
+    ) -> None:
         super().__init__()
+
+        self.transform = transform
 
         if test:
             self.data_url = CLEAN_TESTSET_URL
-            self.data_path = os.path.join(DATA_DIR, "test")
+            self.data_path = os.path.join(data_dir, "test")
         else:
             self.data_url = CLEAN_TRAINSET_56SPK_URL
-            self.data_path = os.path.join(DATA_DIR, "train")
+            self.data_path = os.path.join(data_dir, "train")
 
         self.data_path_wav = os.path.join(self.data_path, "wav")
         self.data_path_gsm = os.path.join(self.data_path, "gsm")
@@ -51,7 +65,7 @@ class CompressedAudioDataset(Dataset):
         """
         Downloads and extracts the base dataset into a fodler named `wav` in the data directory.
         ### Parameters
-        - `force_download`: If `True` it will download everything from source and extract it 
+        - `force_download`: If `True` it will download everything from source and extract it
                             into the `wav` folder, remove everything previously the `wav` folder.
         """
 
@@ -92,12 +106,12 @@ class CompressedAudioDataset(Dataset):
 
     def _get_gsm_samples(self, force_generate=False, n_jobs=-1):
         """
-        Makes a compressed version of every file in the `wav`-folder and puts 
+        Makes a compressed version of every file in the `wav`-folder and puts
         the in a new folder named `gsm` in the data directory.
         ### Parameters
-        - `force_generate`: If `True` it will generate new compressed versions 
-                            of every file in the `wav` folder, removing any 
-                            previous files in the `gsm`-folder before.  
+        - `force_generate`: If `True` it will generate new compressed versions
+                            of every file in the `wav` folder, removing any
+                            previous files in the `gsm`-folder before.
         - `n_jobs`: Amount of processes to use when compressing audio files
         """
         if force_generate and os.path.exists(self.data_path_gsm):
@@ -144,19 +158,44 @@ class CompressedAudioDataset(Dataset):
         dir = os.path.join(self.data_path_wav)
         return len(os.listdir(dir))
 
+    @cache
+    def _wav_filenames(self):
+        return os.listdir(self.data_path_wav)
+
+    @cache
+    def _filename_pairs(self) -> List[Tuple[str, str]]:
+        """
+        Returns a list of tuples `(gsm_path, wav_path)` containing pairs of paths
+        to compressed and uncompressed matching audio samples
+        """
+        return [
+            (
+                os.path.join(self.data_path_gsm, file_name),
+                os.path.join(self.data_path_wav, file_name),
+            )
+            for file_name in self._wav_filenames()
+        ]
+
     def __getitem__(self, index) -> Tuple[Tuple[torch.Tensor, int]]:
         """
         ### Returns
         `((gsm_tensor, gsm_sr), (wav_tensor, wav_sr))`:
-        A tuple of the compressed speech audio + sample rate and the corresponding target audio + sample rate
+        A tuple of the compressed speech audio + sample rate and the 
+        corresponding target audio + sample rate
         """
-        wav_paths = os.listdir(self.data_path_wav)
-        file_name = wav_paths[index]
-
-        gsm_path = os.path.join(self.data_path_gsm, file_name)
-        wav_path = os.path.join(self.data_path_wav, file_name)
+        gsm_path, wav_path = self._filename_pairs()[index]
 
         gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
         wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
 
+        if self.transform is not None:
+            gsm_tensor = self.transform.forward(gsm_tensor)
+            wav_tensor = self.transform.forward(wav_tensor)
+
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
+
+    def numpy(self) -> np.ndarray:
+        return np.transpose([
+            ((gsm[0].numpy(), gsm[1]), (wav[0].numpy(), wav[1]))
+            for (gsm, wav) in tqdm(self, desc="Loading dataset into memory")
+        ])

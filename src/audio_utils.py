@@ -1,13 +1,17 @@
+import json
+
 import IPython.display
 import numpy as np
-import json
+import seaborn as sns
 import torch
-
+from torch.functional import block_diag, norm
+from torchaudio import transforms as T
 from IPython.display import display
 from matplotlib import pyplot as plt
+from matplotlib.colors import LogNorm, SymLogNorm
 
 
-def Audio(audio: np.ndarray, rate: int):
+def Audio(audio: np.ndarray, rate: int, button_text: str = "Play"):
     """
     Use instead of IPython.display.Audio as a workaround for VS Code.
 
@@ -22,67 +26,114 @@ def Audio(audio: np.ndarray, rate: int):
         channels = audio.tolist()
 
     return IPython.display.HTML(
-        """ 
+        f""" 
             <script>
-                if (!window.audioContext) {
+                if (!window.audioContext) {{
                     window.audioContext = new AudioContext();
-                    window.playAudio = function(audioChannels, rate) {
-                        const buffer = audioContext.createBuffer(audioChannels.length, audioChannels[0].length, rate);
-                        for (let [channel, data] of audioChannels.entries()) {
-                        buffer.copyToChannel(Float32Array.from(data), channel);
-                        }
-
+                    window.playAudio = function(audioChannels, rate) {{
+                        const buffer = audioContext.createBuffer(
+                            audioChannels.length, 
+                            audioChannels[0].length, 
+                            rate
+                        );
+                        for (let [channel, data] of audioChannels.entries()) {{
+                            buffer.copyToChannel(Float32Array.from(data), channel);
+                        }}
                         const source = audioContext.createBufferSource();
                         source.buffer = buffer;
                         source.connect(audioContext.destination);
                         source.start();
-                    }
-                }
+                    }}
+                }}
             </script>
-            <button onclick="playAudio(%s, %s)">Play</button>
+            <button onclick="playAudio({json.dumps(channels)}, {rate})">{button_text}</button>
         """
-        % (json.dumps(channels), rate)
     )
 
 
-def plot_specgram(waveform, sample_rate, title="Spectrogram", xlim=None):
-    waveform = waveform.numpy()
+def plot_specgram(
+    spec_tensor: torch.tensor,
+    sample_rate: int,
+    n_fft=2 ** 8,
+    title="Spectrogram",
+    n_yticks=12,
+    ylim_freq=None,
+):
+    """
+    Plots a spectrogram given a tensor with shape [1, B, N, 2].
+    The resulting plot will have shape [B, N].
 
-    num_channels, num_frames = waveform.shape
-    time_axis = torch.arange(0, num_frames) / sample_rate
+    - B: Number of bins,
+    - N: Number of samples
+    """
+    spec = (
+        np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + 
+        np.abs(spec_tensor.squeeze().numpy()[:, :, 1])
+    )
+    _fig, ax = plt.subplots(1, 1, dpi=72, figsize=(12.5, 6))
+    sns.heatmap(spec, norm=LogNorm(), ax=ax, cmap="gist_heat")
+    
+    # Set y-ticks to frequencies in Hz. Computed using the 
+    # implementation of librosa.fft_frequencies: 
+    # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
+    freqs = np.linspace(0, float(sample_rate) / 2, 1 + n_fft // 2, dtype=np.int)
+    ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
+    ax.set_yticks(ytick_idx)
+    ax.set_yticklabels(freqs[ytick_idx])
+    
+    # Set upper y-limit given a frequency in Hz
+    if ylim_freq is None:
+        ylim = None
+    elif ylim_freq > freqs[-1]:
+        ylim = ylim_freq / (freqs[-1] / len(freqs))
+    else:
+        ylim = (np.abs(freqs - ylim_freq)).argmin()
+    ax.set_ylim(ylim)
 
-    figure, axes = plt.subplots(num_channels, 1)
-    if num_channels == 1:
-        axes = [axes]
-    for c in range(num_channels):
-        axes[c].specgram(waveform[c], Fs=sample_rate)
-        if num_channels > 1:
-            axes[c].set_ylabel(f"Channel {c+1}")
-        if xlim:
-            axes[c].set_xlim(xlim)
-    figure.suptitle(title)
+    ax.invert_yaxis()
+    ax.set_title(title)
+    ax.set_ylabel("Frequency [Hz]")
+
     plt.show(block=False)
 
 
-def play_audio(waveform, sample_rate):
-    waveform = waveform.numpy()
+def plot_specgram_from_waveform(
+    waveform: torch.tensor, sample_rate: int, title: str = "Spectrogram"
+):
+    """Computes and plots a spctgrogram given a waveform"""
+    spec_tensor = torch.stft(waveform, return_complex=False, n_fft=2 ** 8)
+    plot_specgram(spec_tensor, sample_rate, title=title)
 
+
+def play_audio(waveform, sample_rate, button_text="Play"):
+    """Displays a play button, that plays the given waveform when pressed"""
+    waveform = waveform.numpy()
     num_channels, num_frames = waveform.shape
     if num_channels == 1:
-        display(Audio(waveform[0], rate=sample_rate))
+        display(Audio(waveform[0], rate=sample_rate, button_text=button_text))
     elif num_channels == 2:
-        display(Audio((waveform[0], waveform[1]), rate=sample_rate))
+        display(
+            Audio((waveform[0], waveform[1]), rate=sample_rate, button_text=button_text)
+        )
     else:
         raise ValueError("Waveform with more than 2 channels are not supported.")
 
 
-def plot_waveform(waveform, sample_rate, title="Waveform", xlim=None, ylim=None):
+def play_audio_from_spec(spec, sample_rate):
+    """Computes a waveform from a spectrogram and displays a button to play it"""
+    waveform_recovered = torch.istft(spec, n_fft=2 ** 8)
+    play_audio(waveform_recovered, sample_rate)
+
+
+def plot_waveform(
+    waveform: torch.tensor, sample_rate: int, title="Waveform", xlim=None, ylim=None
+):
     waveform = waveform.numpy()
 
     num_channels, num_frames = waveform.shape
     time_axis = torch.arange(0, num_frames) / sample_rate
 
-    figure, axes = plt.subplots(num_channels, 1)
+    figure, axes = plt.subplots(num_channels, 1, figsize=(100, 6))
     if num_channels == 1:
         axes = [axes]
     for c in range(num_channels):
