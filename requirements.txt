@@ -1,9 +1,11 @@
 # soundfile # Windows backend for torchaudio
-sox # Unix/MacOS backend for torchaudio
-numpy
-torch
-torchaudio 
-tqdm
-matplotlib
-IPython
-joblib
+sox == 1.4.1 # Unix/MacOS backend for torchaudio
+numpy == 1.21.2
+torch == 1.9.0
+torchaudio == 0.9.0
+tqdm == 4.62.2
+matplotlib == 3.4.3
+ipython == 7.27.0
+joblib == 1.0.1
+scikit-learn == 0.24.2
+seaborn == 0.11.2
