@@ -70,7 +70,7 @@ def plot_specgram(
         np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + 
         np.abs(spec_tensor.squeeze().numpy()[:, :, 1])
     )
-    _fig, ax = plt.subplots(1, 1, dpi=72, figsize=(12.5, 6))
+    _fig, ax = plt.subplots(1, 1, dpi=192, figsize=(12.5, 6))
     sns.heatmap(spec, norm=LogNorm(), ax=ax, cmap="gist_heat")
     
     # Set y-ticks to frequencies in Hz. Computed using the 
