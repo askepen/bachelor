@@ -14,9 +14,6 @@ from tqdm import tqdm
 
 from audio_utils import plot_specgram
 
-# Path to where the datasets will be stored
-DATA_DIR = "../data"
-
 # Links to the base dataset
 CLEAN_TRAINSET_56SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_56spk_wav.zip?sequence=3&isAllowed=y"
 CLEAN_TRAINSET_28SPK_URL = "https://datashare.ed.ac.uk/bitstream/handle/10283/2791/clean_trainset_28spk_wav.zip?sequence=2&isAllowed=y"
@@ -38,8 +35,8 @@ class CompressedAudioDataset(Dataset):
 
     def __init__(
         self,
-        data_dir: str = DATA_DIR,
-        test: bool = False,
+        data_dir: str = "../data",
+        train: bool = True,
         force_download: bool = False,
         force_generate: bool = False,
         transform: torch.nn.Module = None,
@@ -48,12 +45,12 @@ class CompressedAudioDataset(Dataset):
 
         self.transform = transform
 
-        if test:
-            self.data_url = CLEAN_TESTSET_URL
-            self.data_path = os.path.join(data_dir, "test")
-        else:
+        if train:
             self.data_url = CLEAN_TRAINSET_56SPK_URL
             self.data_path = os.path.join(data_dir, "train")
+        else:
+            self.data_url = CLEAN_TESTSET_URL
+            self.data_path = os.path.join(data_dir, "test")
 
         self.data_path_wav = os.path.join(self.data_path, "wav")
         self.data_path_gsm = os.path.join(self.data_path, "gsm")
@@ -187,10 +184,15 @@ class CompressedAudioDataset(Dataset):
 
         gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
         wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
-
+        
         if self.transform is not None:
-            gsm_tensor = self.transform.forward(gsm_tensor)
-            wav_tensor = self.transform.forward(wav_tensor)
+            # gsm_tensor = self.transform.forward(gsm_tensor)
+            # wav_tensor = self.transform.forward(wav_tensor)
+            gsm_tensor = self.transform.forward((gsm_tensor, gsm_sr))
+            wav_tensor = self.transform.forward((wav_tensor, wav_sr))
+
+        print(f"dataloader:\t{gsm_tensor.shape}")
+        print(f"dataloader:\t{wav_tensor.shape}")
 
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 

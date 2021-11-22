@@ -6,12 +6,14 @@ from audio_utils import *
 from baseline import BaselineAudioRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn import metrics
+from train import train
+
 import torchaudio.transforms as T
 
 def main():
     # dataset_examples()
-    train_baseline()
-
+    # train_baseline()
+    train()
 
 def dataset_examples():
     dataset = CompressedAudioDataset(test=False)
@@ -34,19 +36,19 @@ def train_baseline():
     dataset = CompressedAudioDataset(data_dir="../data", test=True, transform=transform)
 
     model = BaselineAudioRegressor()
-    i = 0
-    for (x, x_sr), (y, y_sr) in dataset:
-        pred = model.predict(x)
+    # i = 0
+    # for (x, x_sr), (y, y_sr) in dataset:
+    #     pred = model.predict(x)
         
-        print(f"{i = }")
-        plot_spec_and_play(x, x_sr, title=f"Low res {i}")
-        plot_spec_and_play(pred, y_sr, title=f"Predicted {i}")
-        plot_spec_and_play(y, y_sr, title=f"Actual {i}")
+    #     print(f"{i = }")
+    #     plot_spec_and_play(x, x_sr, title=f"Low res {i}")
+    #     plot_spec_and_play(pred, y_sr, title=f"Predicted {i}")
+    #     plot_spec_and_play(y, y_sr, title=f"Actual {i}")
 
-        i += 1
-        if i > 3:
-            break
-
+    #     i += 1
+    #     if i > 3:
+    #         break
+    (X, y), _ = dataset.numpy()
     #results = cross_val_score(model, X, y, cv=4)
     #print(results)
 
