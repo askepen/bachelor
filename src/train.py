@@ -6,13 +6,11 @@ import torch
 
 
 def train():
-
-    torch.manual_seed(42)  # DELET THIS
     wandb_logger = WandbLogger(project="Bachelor")
     data_module = CompressedAudioDataModule(data_dir="../data")
     model = LitModel(126, 751)
     trainer = pl.Trainer(
-        # logger=wandb_logger,
+        logger=wandb_logger,
         gpus=None,  # -1,
         max_epochs=3,
     )

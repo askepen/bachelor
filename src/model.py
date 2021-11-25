@@ -10,8 +10,6 @@ class LitModel(pl.LightningModule):
         self.loss_fn = nn.MSELoss(reduction="sum")
         mid_features = 128
         self.layers = nn.Sequential(
-            # nn.Linear(in_features, in_features),
-            # nn.Linear(in_features, out_features),
             nn.Conv2d(in_features, mid_features, kernel_size=3, padding=1),
             nn.Conv2d(mid_features, mid_features, kernel_size=3, padding=1),
             nn.Conv2d(mid_features, mid_features, kernel_size=3, padding=1),
@@ -27,11 +25,7 @@ class LitModel(pl.LightningModule):
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, x_sr), (y, y_sr) = batch
-        pred = self(x)  # Run model
-
-        # print(f"{step_name} pred:\t{pred.shape}")
-        # print(f"{step_name} y:   \t{y.shape}")
-
+        pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
         return loss

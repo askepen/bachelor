@@ -13,14 +13,12 @@ class STFT(Module):
 
     def forward(self, x):
         waveform, sample_rate = x
-        # n_fft = round(sample_rate / (2 ** 5))
         n_fft = sample_rate // (2 ** 5)
         x = torch.stft(waveform, return_complex=True, n_fft=n_fft)
         if self.return_sample_rate:
             return x, sample_rate
         else:
             return x
-        # return torch.stft(waveform, return_complex=False, n_fft=n_fft)
 
 
 class DropSampleRate(Module):
@@ -36,7 +34,6 @@ class DropSampleRate(Module):
 
 class PadToSize(Module):
     def __init__(self, shape, has_sample_rate=False) -> None:
-        # self.shape = torch.Size(shape)
         self.shape = shape
         self.has_sample_rate = has_sample_rate
         super().__init__()
@@ -44,13 +41,9 @@ class PadToSize(Module):
     def forward(self, x):
         if self.has_sample_rate:
             x, sample_rate = x
-        # shape_diff = [d2-d1 for d1, d2 in zip(x.shape, self.shape)]
         shape_diff = [0, self.shape - x.shape[-1]]
-        # print(f"{shape_diff=}")
-
         x = x.squeeze()
         x = F.pad(x, pad=shape_diff, value=0)
-        # .unsqueeze(0)
         if self.has_sample_rate:
             return x, sample_rate
         else:
@@ -64,11 +57,11 @@ class DisplayTensor(Module):
         super().__init__()
 
     def forward(self, x):
-        # sns.heatmap(x.real.view(x.shape[-2:]))
         spec, sample_rate = x
         spec = torch.view_as_real(spec)
         audio_utils.plot_specgram(
-            spec, sample_rate, n_fft=sample_rate // (2 ** 5))
+            spec, sample_rate, n_fft=sample_rate // (2 ** 5)
+        )
         plt.show()
         return x
 
