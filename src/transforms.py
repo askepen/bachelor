@@ -1,32 +1,107 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Module
+import seaborn as sns
+from matplotlib import pyplot as plt
+import audio_utils
+
 
 class STFT(Module):
-    def __init__(self) -> None:
+    def __init__(self, return_sample_rate=False) -> None:
+        self.return_sample_rate = return_sample_rate
         super().__init__()
-    
+
     def forward(self, x):
         waveform, sample_rate = x
-        n_fft = round(sample_rate / (2 ** 5))
-        # n_fft = sample_rate // (2 ** 5)
-        return torch.stft(waveform, return_complex=True, n_fft=n_fft)
+        # n_fft = round(sample_rate / (2 ** 5))
+        n_fft = sample_rate // (2 ** 5)
+        x = torch.stft(waveform, return_complex=True, n_fft=n_fft)
+        if self.return_sample_rate:
+            return x, sample_rate
+        else:
+            return x
         # return torch.stft(waveform, return_complex=False, n_fft=n_fft)
 
-class OnlyWavefrom(Module):
+
+class DropSampleRate(Module):
+    """Given a tuple (x, sample_rate) it returns only x"""
+
     def __init__(self) -> None:
         super().__init__()
-    
-    def forward(self, x):
-        """x should be a Tensor[waveform, sample_rate]"""
-        waveform, _sample_rate = x
-        return waveform
 
-# class PadToSize(Module):    
-#     def __init__(self, shape) -> None:
-#         self.shape = shape
-#         super().__init__()
-    
-#     def forward(self, x):
-#         """ """
-#         return F.pad(x, (self.shape , 0))
+    def forward(self, x):
+        x, _sample_rate = x
+        return x
+
+
+class PadToSize(Module):
+    def __init__(self, shape, has_sample_rate=False) -> None:
+        # self.shape = torch.Size(shape)
+        self.shape = shape
+        self.has_sample_rate = has_sample_rate
+        super().__init__()
+
+    def forward(self, x):
+        if self.has_sample_rate:
+            x, sample_rate = x
+        # shape_diff = [d2-d1 for d1, d2 in zip(x.shape, self.shape)]
+        shape_diff = [0, self.shape - x.shape[-1]]
+        # print(f"{shape_diff=}")
+
+        x = x.squeeze()
+        x = F.pad(x, pad=shape_diff, value=0)
+        # .unsqueeze(0)
+        if self.has_sample_rate:
+            return x, sample_rate
+        else:
+            return x
+
+
+class DisplayTensor(Module):
+    """Plots a spectrogram. Input must be tuple of (stft, sample_rate)"""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x):
+        # sns.heatmap(x.real.view(x.shape[-2:]))
+        spec, sample_rate = x
+        spec = torch.view_as_real(spec)
+        audio_utils.plot_specgram(
+            spec, sample_rate, n_fft=sample_rate // (2 ** 5))
+        plt.show()
+        return x
+
+
+class PlayWaveform(Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x):
+        waveform, sample_rate = x
+        audio_utils.play_audio(waveform, sample_rate)
+        return x
+
+
+class PrintShape(Module):
+    """Prints the size of a tensor. Does not actuaclly transform the input."""
+
+    def __init__(self, annotation="PrintShape()", has_sample_rate=False) -> None:
+        self.annotation = annotation
+        self.has_sample_rate = has_sample_rate
+        super().__init__()
+
+    def forward(self, x):
+        tensor = x[0] if self.has_sample_rate else x
+        print(f"{self.annotation}: {tensor.shape}")
+        return x
+
+
+class ViewAsReal(Module):
+    """Prints the size of a tensor. Does not actuaclly transform the input."""
+
+    def __init__(self, annotation="PrintShape()", has_sample_rate=False) -> None:
+        super().__init__()
+
+    def forward(self, x):
+        return torch.view_as_real(x)

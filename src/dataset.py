@@ -120,7 +120,8 @@ class CompressedAudioDataset(Dataset):
             _ = Parallel(n_jobs=n_jobs)(
                 map(
                     delayed(self._generate_gsm_sample),
-                    tqdm(os.listdir(self.data_path_wav), desc="Generating GSM samples"),
+                    tqdm(os.listdir(self.data_path_wav),
+                         desc="Generating GSM samples"),
                 )
             )
 
@@ -138,7 +139,8 @@ class CompressedAudioDataset(Dataset):
                 [
                     "compand",
                     "0.02,0.05",  # attack, decay
-                    "-60,-60,-30,-10,-20,-8,-5,-8,-2,-8",  # [soft-knee-dB:]in-dB1[,out-dB1]{,in-dB2,out-dB2}
+                    # [soft-knee-dB:]in-dB1[,out-dB1]{,in-dB2,out-dB2}
+                    "-60,-60,-30,-10,-20,-8,-5,-8,-2,-8",
                     "-8",
                     "-7",  # [gain [initial-volume-dB [delay]]]
                     "0.05",
@@ -184,15 +186,12 @@ class CompressedAudioDataset(Dataset):
 
         gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
         wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
-        
+
         if self.transform is not None:
             # gsm_tensor = self.transform.forward(gsm_tensor)
             # wav_tensor = self.transform.forward(wav_tensor)
             gsm_tensor = self.transform.forward((gsm_tensor, gsm_sr))
             wav_tensor = self.transform.forward((wav_tensor, wav_sr))
-
-        print(f"dataloader:\t{gsm_tensor.shape}")
-        print(f"dataloader:\t{wav_tensor.shape}")
 
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 

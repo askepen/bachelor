@@ -4,16 +4,16 @@ from model import LitModel
 from data_module import CompressedAudioDataModule
 import torch
 
-def train():    
 
-    torch.manual_seed(42) # DELET THIS
+def train():
+
+    torch.manual_seed(42)  # DELET THIS
     wandb_logger = WandbLogger(project="Bachelor")
-    data_module = CompressedAudioDataModule(data_dir="./data")
-    model = LitModel(126,751)
+    data_module = CompressedAudioDataModule(data_dir="../data")
+    model = LitModel(126, 751)
     trainer = pl.Trainer(
         # logger=wandb_logger,
-        gpus=None,#-1,
+        gpus=None,  # -1,
         max_epochs=3,
     )
     trainer.fit(model, data_module)
-    
