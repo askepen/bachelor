@@ -1,3 +1,4 @@
+import os
 import transforms
 from torch import nn
 from pytorch_lightning import LightningDataModule
@@ -8,10 +9,11 @@ from torch.utils.data import DataLoader, random_split
 class CompressedAudioDataModule(LightningDataModule):
     """PyTorch-Lightning data module for the compressed audio dataset"""
 
-    def __init__(self, data_dir='../data', batch_size=256):
+    def __init__(self, data_dir='../data', batch_size=16):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
+        self.num_workers = os.cpu_count()
         self.transform = nn.Sequential(
             transforms.STFT(),
             transforms.PadToSize(285),
@@ -40,12 +42,12 @@ class CompressedAudioDataModule(LightningDataModule):
 
     def train_dataloader(self):
         """Returns training dataloader"""
-        return DataLoader(self.dataset_train, batch_size=self.batch_size)
+        return DataLoader(self.dataset_train, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def val_dataloader(self):
         """Returns validation dataloader"""
-        return DataLoader(self.dataset_val, batch_size=self.batch_size)
+        return DataLoader(self.dataset_val, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
         """Returns test dataloader"""
-        return DataLoader(self.dataset_test, batch_size=self.batch_size)
+        return DataLoader(self.dataset_test, batch_size=self.batch_size, num_workers=self.num_workers)

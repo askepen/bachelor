@@ -7,7 +7,7 @@ import torch
 
 def train():
     wandb_logger = WandbLogger(project="Bachelor")
-    data_module = CompressedAudioDataModule(data_dir="../data")
+    data_module = CompressedAudioDataModule(data_dir="./data")
     model = LitModel(126, 751)
     trainer = pl.Trainer(
         logger=wandb_logger,
