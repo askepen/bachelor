@@ -10,7 +10,9 @@ def train():
     model = LitModel(126, 751)
     trainer = pl.Trainer(
         logger=wandb_logger,
-        gpus=-1,
+        # gpus=-1,
+        progress_bar_refresh_rate=20,
+        tpu_cores=[5],
         max_epochs=3,
     )
     trainer.fit(model, data_module)
