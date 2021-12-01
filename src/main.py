@@ -8,9 +8,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn import metrics
 from train import train
 
-import torchaudio.transforms as T
-
-
 def main():
     # dataset_examples()
     # train_baseline()
@@ -37,7 +34,7 @@ def plot_spec_and_play(waveform, sample_rate, title="Spectrogram"):
 def train_baseline():
     transform = torch.nn.Sequential()
     dataset = CompressedAudioDataset(
-        data_dir="../data", test=True, transform=transform)
+        data_dir="../data", train=True, transform=transform)
 
     model = BaselineAudioRegressor()
     # i = 0
