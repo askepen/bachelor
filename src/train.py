@@ -2,17 +2,30 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from model import LitModel
 from data_module import CompressedAudioDataModule
+from argparse import ArgumentParser
 
 
 def train():
+    parser = ArgumentParser()
+    parser.add_argument("batch_size")
+    parser.add_argument("learning_rate")
+    parser.add_argument("gpus")
+    parser.add_argument("tpus")
+
     wandb_logger = WandbLogger(project="Bachelor")
     data_module = CompressedAudioDataModule(data_dir="./data")
+
+    # 126x751 is the spectrogram size
     model = LitModel(126, 751)
     trainer = pl.Trainer(
         logger=wandb_logger,
-        gpus=-1,
+        gpus=None,
         progress_bar_refresh_rate=20,
         # tpu_cores=1,
         max_epochs=3,
     )
     trainer.fit(model, data_module)
+
+
+if __name__ == "__main__":
+    train()

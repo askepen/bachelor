@@ -67,20 +67,21 @@ def plot_specgram(
     - N: Number of samples
     """
     spec = (
-        np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + 
+        np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) +
         np.abs(spec_tensor.squeeze().numpy()[:, :, 1])
     )
     _fig, ax = plt.subplots(1, 1, dpi=192, figsize=(12.5, 6))
     sns.heatmap(spec, norm=LogNorm(), ax=ax, cmap="gist_heat")
-    
-    # Set y-ticks to frequencies in Hz. Computed using the 
-    # implementation of librosa.fft_frequencies: 
+
+    # Set y-ticks to frequencies in Hz. Computed using the
+    # implementation of librosa.fft_frequencies:
     # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
-    freqs = np.linspace(0, float(sample_rate) / 2, 1 + n_fft // 2, dtype=np.int)
+    freqs = np.linspace(0, float(sample_rate) / 2,
+                        1 + n_fft // 2, dtype=np.int)
     ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
     ax.set_yticks(ytick_idx)
     ax.set_yticklabels(freqs[ytick_idx])
-    
+
     # Set upper y-limit given a frequency in Hz
     if ylim_freq is None:
         ylim = None
@@ -113,10 +114,12 @@ def play_audio(waveform, sample_rate, button_text="Play"):
         display(Audio(waveform[0], rate=sample_rate, button_text=button_text))
     elif num_channels == 2:
         display(
-            Audio((waveform[0], waveform[1]), rate=sample_rate, button_text=button_text)
+            Audio((waveform[0], waveform[1]),
+                  rate=sample_rate, button_text=button_text)
         )
     else:
-        raise ValueError("Waveform with more than 2 channels are not supported.")
+        raise ValueError(
+            "Waveform with more than 2 channels are not supported.")
 
 
 def play_audio_from_spec(spec, sample_rate):

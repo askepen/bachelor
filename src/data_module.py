@@ -18,6 +18,7 @@ class CompressedAudioDataModule(LightningDataModule):
             transforms.STFT(),
             transforms.PadToSize(285),
             transforms.ViewAsReal(),
+            # transforms.PrintShape(),
         )
 
     def prepare_data(self):
