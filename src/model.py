@@ -35,6 +35,12 @@ class LitModel(pl.LightningModule):
 
         self.save_hyperparameters()
 
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = parent_parser.add_argument_group("LitModel")
+        parser.add_argument("--num_blocks", type=int, default=4)
+        return parent_parser
+
     def block(self, in_channels, out_channels, with_concat=False):
         in_channels = in_channels + out_channels if with_concat else in_channels
         return nn.Sequential(
@@ -93,7 +99,13 @@ class LitModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx) -> None:
         """Logs validation loss"""
-        return self._step(batch, batch_idx, "valid")
+        loss = self._step(batch, batch_idx, "valid")
+        # n_fft = sample_rate // (2 ** 5)
+        # audio_utils.plot_specgram(
+        #     spec, sample_rate, n_fft=n_fft,
+        #     ylim_freq=None, n_yticks=13, title=title
+        # )
+        return loss
 
     def test_step(self, batch, batch_idx):
         """Logs test loss"""
