@@ -18,7 +18,7 @@ class LitModel(pl.LightningModule):
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
         self.down_blocks = [
-            self.block(1, 64),
+            self.block(2, 64),
             self.block(64, 128),
             self.block(128, 256),
             self.block(256, 512),
@@ -31,7 +31,7 @@ class LitModel(pl.LightningModule):
             self.block(256, 128, with_concat=True),
             self.block(128, 64, with_concat=True),
         ]
-        self.out = Conv2d(in_channels=64, out_channels=1, kernel_size=1)
+        self.out = Conv2d(in_channels=64, out_channels=2, kernel_size=1)
 
         self.save_hyperparameters()
 
@@ -48,26 +48,22 @@ class LitModel(pl.LightningModule):
         return CenterCrop(shape_to_match[-2:])(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Add channel dimension, so we have
-        # shape = [batch_size, channels, height, width]
-        x = x.unsqueeze(1)
+        # Treat real/imag axes as channels
+        # x = torch.view_as_real(x)
+        x = x.permute(0, 3, 1, 2)
 
         # Make output shape match input shape if it not specified
         self.out_size = self.out_size or x.shape
 
         skip = []
 
-        # Contracting path
         for block in self.down_blocks:
             x = block(x)
             skip.append(x)
-            # x = torch.view_as_complex(x)
             x = self.down(x)
-            # x = torch.view_as_real(x)
 
         x = self.bottom(x)
 
-        # Expanding path
         for skip_connection, block in zip(skip[::-1], self.up_blocks):
             x = self.up(x)
             skip_connection = self.crop_width_height(skip_connection, x.shape)
@@ -77,7 +73,9 @@ class LitModel(pl.LightningModule):
         x = self.out(x)
         x = self.crop_width_height(x, self.out_size)
 
-        x = x.squeeze(1)
+        # Treat channels to real/imag axes
+        x = x.permute(0, 2, 3, 1)
+        # x = x.reshape(x.permute(0, 2, 3, 1).shape)
 
         return x
 

@@ -13,13 +13,13 @@ def train():
     parser.add_argument("tpus")
 
     wandb_logger = WandbLogger(project="Bachelor")
-    data_module = CompressedAudioDataModule(data_dir="./data", batch_size=16)
+    data_module = CompressedAudioDataModule(data_dir="./data", batch_size=2)
 
     model = LitModel(out_size=[751, 285])
     trainer = pl.Trainer(
-        logger=wandb_logger,
+        # logger=wandb_logger,
         gpus=None,
-        progress_bar_refresh_rate=20,
+        progress_bar_refresh_rate=1,
         # tpu_cores=1,
         max_epochs=3,
     )

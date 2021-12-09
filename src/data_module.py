@@ -17,8 +17,8 @@ class CompressedAudioDataModule(LightningDataModule):
         self.transform = nn.Sequential(
             transforms.STFT(),
             transforms.PadToSize(285),
-            # transforms.ViewAsReal(),
-            transforms.OnlyReal(),
+            transforms.ViewAsReal(),
+            # transforms.OnlyReal(),
             # transforms.PrintShape(),
         )
 
