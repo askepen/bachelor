@@ -17,20 +17,20 @@ class LitModel(pl.LightningModule):
         self.lr = lr
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
-        self.down_blocks = [
+        self.down_blocks = torch.nn.ModuleList([
             self.block(2, 64),
             self.block(64, 128),
             self.block(128, 256),
             self.block(256, 512),
-        ]
+        ])
         self.bottom = self.block(512, 1024)
         self.up = nn.UpsamplingBilinear2d(scale_factor=2)
-        self.up_blocks = [
+        self.up_blocks = torch.nn.ModuleList([
             self.block(1024, 512, with_concat=True),
             self.block(512, 256, with_concat=True),
             self.block(256, 128, with_concat=True),
             self.block(128, 64, with_concat=True),
-        ]
+        ])
         self.out = Conv2d(in_channels=64, out_channels=2, kernel_size=1)
 
         self.save_hyperparameters()
