@@ -91,10 +91,21 @@ class PrintShape(Module):
 
 
 class ViewAsReal(Module):
-    """Prints the size of a tensor. Does not actuaclly transform the input."""
+    """Represents complex type as [real, img]."""
 
-    def __init__(self, annotation="PrintShape()", has_sample_rate=False) -> None:
+    def __init__(self, ) -> None:
         super().__init__()
 
     def forward(self, x):
         return torch.view_as_real(x)
+
+
+class OnlyReal(Module):
+    """Drops the imaginary part of complex tensor."""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x: torch.Tensor):
+        # x = torch.view_as_complex(x)
+        return x.real

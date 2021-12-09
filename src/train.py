@@ -13,10 +13,9 @@ def train():
     parser.add_argument("tpus")
 
     wandb_logger = WandbLogger(project="Bachelor")
-    data_module = CompressedAudioDataModule(data_dir="./data")
+    data_module = CompressedAudioDataModule(data_dir="./data", batch_size=16)
 
-    # 126x751 is the spectrogram size
-    model = LitModel(126, 751)
+    model = LitModel(out_size=[751, 285])
     trainer = pl.Trainer(
         logger=wandb_logger,
         gpus=None,
