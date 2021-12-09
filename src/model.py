@@ -11,9 +11,9 @@ from torchvision.transforms import CenterCrop
 
 
 class LitModel(pl.LightningModule):
-    def __init__(self, out_size=None, lr=1e-3):
+    def __init__(self, stft_width, stft_height_out, lr, **kwargs):
         super().__init__()
-        self.out_size = out_size
+        self.out_size = [stft_height_out, stft_width]
         self.lr = lr
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
@@ -38,6 +38,7 @@ class LitModel(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("LitModel")
+        parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=4)
         return parent_parser
 

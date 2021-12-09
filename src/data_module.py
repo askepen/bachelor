@@ -9,17 +9,15 @@ from torch.utils.data import DataLoader, random_split
 class CompressedAudioDataModule(LightningDataModule):
     """PyTorch-Lightning data module for the compressed audio dataset"""
 
-    def __init__(self, data_dir='../data', batch_size=16):
+    def __init__(self, data_dir, batch_size, stft_width):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = os.cpu_count()
         self.transform = nn.Sequential(
             transforms.STFT(),
-            transforms.PadToSize(285),
+            transforms.PadToSize(stft_width),
             transforms.ViewAsReal(),
-            # transforms.OnlyReal(),
-            # transforms.PrintShape(),
         )
 
     def prepare_data(self):
