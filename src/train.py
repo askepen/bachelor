@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.trainer.trainer import Trainer
 from model import LitModel
 from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser
@@ -12,10 +13,8 @@ def train():
     parser.add_argument("--stft_width", type=int, default=285)
     parser.add_argument("--stft_height_out", type=int, default=751)
     parser.add_argument("--wandb", type=bool, default=False)
-    parser.add_argument("--gpus", type=int, default=None)
     parser.add_argument("--max_epochs", type=int, default=3)
-    parser.add_argument("--tpu_cores", type=int, default=None)
-    parser.add_argument("--progress_bar_refresh_rate", type=int, default=1)
+    parser = Trainer.add_argparse_args(parser)
     parser = LitModel.add_model_specific_args(parser)
     args = parser.parse_args()
 
