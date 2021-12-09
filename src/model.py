@@ -8,6 +8,7 @@ from torch import nn
 # )
 from torch.nn import Conv2d, ReLU, MaxPool2d
 from torchvision.transforms import CenterCrop
+import audio_utils
 
 
 class LitModel(pl.LightningModule):
@@ -24,7 +25,7 @@ class LitModel(pl.LightningModule):
             self.block(256, 512),
         ])
         self.bottom = self.block(512, 1024)
-        self.up = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.up = nn.UpsamplingBilinear2d(scale_factor=(3.2, 2))
         self.up_blocks = torch.nn.ModuleList([
             self.block(1024, 512, with_concat=True),
             self.block(512, 256, with_concat=True),
@@ -39,15 +40,17 @@ class LitModel(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
-        parser.add_argument("--num_blocks", type=int, default=4)
+        parser.add_argument("--num_blocks", type=int, default=3)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
         in_channels = in_channels + out_channels if with_concat else in_channels
         return nn.Sequential(
-            Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            Conv2d(in_channels, out_channels, kernel_size=3,
+                   padding=1, padding_mode="circular"),
             ReLU(),
-            Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            Conv2d(out_channels, out_channels, kernel_size=3,
+                   padding=1, padding_mode="circular"),
             ReLU(),
         )
 
@@ -56,8 +59,8 @@ class LitModel(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Treat real/imag axes as channels
-        # x = torch.view_as_real(x)
         x = x.permute(0, 3, 1, 2)
+        # x = x.reshape(x.permute(0, 3, 1, 2).shape)
 
         # Make output shape match input shape if it not specified
         self.out_size = self.out_size or x.shape
@@ -78,13 +81,29 @@ class LitModel(pl.LightningModule):
             x = block(x)
 
         x = self.out(x)
+        print()
+        print(x.shape)
         x = self.crop_width_height(x, self.out_size)
+        print(x.shape)
 
         # Treat channels to real/imag axes
         x = x.permute(0, 2, 3, 1)
         # x = x.reshape(x.permute(0, 2, 3, 1).shape)
+        # x = x.reshape(x.permute(0, 2, 3, 1).shape)
 
         return x
+
+    def save_sample(self, x, sr: torch.Tensor, name):
+        sr = sr.item()
+        n_fft = sr // (2 ** 5)
+        audio_utils.plot_specgram(
+            x, sr, n_fft=n_fft, ylim_freq=None,
+            # n_yticks=13,
+            title=name, save_path=f"output/{name}.png"
+        )
+        x = torch.view_as_complex(x.contiguous())
+        waveform = torch.istft(x, n_fft)
+        audio_utils.save_audio(waveform, sr, f"output/{name}.wav")
 
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
@@ -92,6 +111,13 @@ class LitModel(pl.LightningModule):
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
+        x, x_sr = x.detach(), x_sr.detach()
+        y, y_sr = y.detach(), y_sr.detach()
+        pred = pred.detach()
+        if batch_idx % 20 == 0:
+            self.save_sample(x, x_sr, f"{batch_idx}-x")
+            self.save_sample(y, y_sr, f"{batch_idx}-y")
+            self.save_sample(pred, y_sr, f"{batch_idx}-pred")
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
@@ -101,11 +127,6 @@ class LitModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx) -> None:
         """Logs validation loss"""
         loss = self._step(batch, batch_idx, "valid")
-        # n_fft = sample_rate // (2 ** 5)
-        # audio_utils.plot_specgram(
-        #     spec, sample_rate, n_fft=n_fft,
-        #     ylim_freq=None, n_yticks=13, title=title
-        # )
         return loss
 
     def test_step(self, batch, batch_idx):

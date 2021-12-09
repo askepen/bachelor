@@ -9,6 +9,7 @@ from torchaudio import transforms as T
 from IPython.display import display
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
+import torchaudio
 
 
 def Audio(audio: np.ndarray, rate: int, button_text: str = "Play"):
@@ -58,6 +59,7 @@ def plot_specgram(
     title="Spectrogram",
     n_yticks=12,
     ylim_freq=None,
+    save_path=None,
 ):
     """
     Plots a spectrogram given a tensor with shape [1, B, N, 2].
@@ -95,7 +97,11 @@ def plot_specgram(
     ax.set_title(title)
     ax.set_ylabel("Frequency [Hz]")
 
-    plt.show(block=False)
+    if save_path is not None:
+        plt.savefig(save_path, dpi=72)
+        plt.clf()
+    else:
+        plt.show(block=False)
 
 
 def plot_specgram_from_waveform(
@@ -120,6 +126,11 @@ def play_audio(waveform, sample_rate, button_text="Play"):
     else:
         raise ValueError(
             "Waveform with more than 2 channels are not supported.")
+
+
+def save_audio(waveform, sample_rate, path):
+    """Saves the given waveform to a path"""
+    torchaudio.save(path, waveform, sample_rate, format="wav")
 
 
 def play_audio_from_spec(spec, sample_rate):
