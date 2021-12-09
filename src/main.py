@@ -6,7 +6,7 @@ from dataset import CompressedAudioDataset
 
 
 def main():
-    dataset_examples()
+    # dataset_examples()
     train.train()
 
 
