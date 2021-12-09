@@ -81,10 +81,7 @@ class LitModel(pl.LightningModule):
             x = block(x)
 
         x = self.out(x)
-        print()
-        print(x.shape)
         x = self.crop_width_height(x, self.out_size)
-        print(x.shape)
 
         # Treat channels to real/imag axes
         x = x.permute(0, 2, 3, 1)
