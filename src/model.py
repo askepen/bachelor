@@ -16,14 +16,14 @@ class LitModel(pl.LightningModule):
     def __init__(
         self,
         stft_width,
-        stft_height_out,
+        stft_height,
         lr,
         num_blocks,
         output_result_every_n_steps,
         **kwargs,
     ):
         super().__init__()
-        self.out_size = [stft_height_out, stft_width]
+        self.out_size = [stft_height, stft_width]
         self.lr = lr
         self.num_blocks = num_blocks
         self.output_result_every_n_steps = output_result_every_n_steps

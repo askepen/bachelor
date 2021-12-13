@@ -6,14 +6,23 @@ from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser
 
 
-def train():
+def train_from_dict(hparams, trainer_hparams):
+    trainer_hparams["logger"] = (
+        WandbLogger(project="Bachelor") if hparams["wandb"] else None
+    )
+    model = LitModel(**hparams)
+    data_module = CompressedAudioDataModule(**hparams)
+    trainer = pl.Trainer(**trainer_hparams)
+    trainer.fit(model, data_module)
+
+
+def train_from_argparse():
     parser = ArgumentParser()
     parser.add_argument("--data_dir", type=str, default="./data")
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--n_fft", type=int, default=None)
     parser.add_argument("--stft_width", type=int, default=285)
     parser.add_argument("--stft_height", type=int, default=751)
-    parser.add_argument("--stft_height_out", type=int, default=751)
     parser.add_argument("--wandb", type=bool, default=False)
     parser = Trainer.add_argparse_args(parser)
     parser = LitModel.add_model_specific_args(parser)
@@ -27,4 +36,4 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    train_from_argparse()
