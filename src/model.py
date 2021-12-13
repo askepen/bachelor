@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
+
 # from complexPyTorch.complexLayers import (
 #     #     ComplexConv2d as Conv2d,
 #     #     ComplexReLU as ReLU,
@@ -12,26 +13,41 @@ import audio_utils
 
 
 class LitModel(pl.LightningModule):
-    def __init__(self, stft_width, stft_height_out, lr, **kwargs):
+    def __init__(
+        self,
+        stft_width,
+        stft_height_out,
+        lr,
+        num_blocks,
+        output_result_every_n_steps,
+        **kwargs,
+    ):
         super().__init__()
         self.out_size = [stft_height_out, stft_width]
         self.lr = lr
+        self.num_blocks = num_blocks
+        self.output_result_every_n_steps = output_result_every_n_steps
+
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
-        self.down_blocks = torch.nn.ModuleList([
-            self.block(2, 64),
-            self.block(64, 128),
-            self.block(128, 256),
-            self.block(256, 512),
-        ])
+        self.down_blocks = torch.nn.ModuleList(
+            [
+                self.block(2, 64),
+                self.block(64, 128),
+                self.block(128, 256),
+                self.block(256, 512),
+            ]
+        )
         self.bottom = self.block(512, 1024)
         self.up = nn.UpsamplingBilinear2d(scale_factor=(3.2, 2))
-        self.up_blocks = torch.nn.ModuleList([
-            self.block(1024, 512, with_concat=True),
-            self.block(512, 256, with_concat=True),
-            self.block(256, 128, with_concat=True),
-            self.block(128, 64, with_concat=True),
-        ])
+        self.up_blocks = torch.nn.ModuleList(
+            [
+                self.block(1024, 512, with_concat=True),
+                self.block(512, 256, with_concat=True),
+                self.block(256, 128, with_concat=True),
+                self.block(128, 64, with_concat=True),
+            ]
+        )
         self.out = Conv2d(in_channels=64, out_channels=2, kernel_size=1)
 
         self.save_hyperparameters()
@@ -41,16 +57,27 @@ class LitModel(pl.LightningModule):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=3)
+        parser.add_argument("--output_result_every_n_steps", type=int, default=20)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
         in_channels = in_channels + out_channels if with_concat else in_channels
         return nn.Sequential(
-            Conv2d(in_channels, out_channels, kernel_size=3,
-                   padding=1, padding_mode="circular"),
+            Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=3,
+                padding=1,
+                padding_mode="circular",
+            ),
             ReLU(),
-            Conv2d(out_channels, out_channels, kernel_size=3,
-                   padding=1, padding_mode="circular"),
+            Conv2d(
+                out_channels,
+                out_channels,
+                kernel_size=3,
+                padding=1,
+                padding_mode="circular",
+            ),
             ReLU(),
         )
 
@@ -58,9 +85,8 @@ class LitModel(pl.LightningModule):
         return CenterCrop(shape_to_match[-2:])(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Treat real/imag axes as channels
+        # Convert real/imag axes to channels
         x = x.permute(0, 3, 1, 2)
-        # x = x.reshape(x.permute(0, 3, 1, 2).shape)
 
         # Make output shape match input shape if it not specified
         self.out_size = self.out_size or x.shape
@@ -83,20 +109,23 @@ class LitModel(pl.LightningModule):
         x = self.out(x)
         x = self.crop_width_height(x, self.out_size)
 
-        # Treat channels to real/imag axes
+        # Convert channels to real/imag axes
         x = x.permute(0, 2, 3, 1)
-        # x = x.reshape(x.permute(0, 2, 3, 1).shape)
-        # x = x.reshape(x.permute(0, 2, 3, 1).shape)
 
         return x
 
     def save_sample(self, x, sr: torch.Tensor, name):
+        x, sr = x.detach()[0], sr.detach()[0]
         sr = sr.item()
         n_fft = sr // (2 ** 5)
         audio_utils.plot_specgram(
-            x, sr, n_fft=n_fft, ylim_freq=None,
-            # n_yticks=13,
-            title=name, save_path=f"output/{name}.png"
+            x,
+            sr,
+            n_fft=n_fft,
+            ylim_freq=None,
+            n_yticks=13,
+            title=name,
+            save_path=f"output/{name}.png",
         )
         x = torch.view_as_complex(x.contiguous())
         waveform = torch.istft(x, n_fft)
@@ -108,10 +137,11 @@ class LitModel(pl.LightningModule):
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
-        x, x_sr = x.detach(), x_sr.detach()
-        y, y_sr = y.detach(), y_sr.detach()
-        pred = pred.detach()
-        if batch_idx % 20 == 0:
+
+        if (
+            self.output_result_every_n_steps is not None
+            and batch_idx % self.output_result_every_n_steps == 0
+        ):
             self.save_sample(x, x_sr, f"{batch_idx}-x")
             self.save_sample(y, y_sr, f"{batch_idx}-y")
             self.save_sample(pred, y_sr, f"{batch_idx}-pred")
@@ -123,8 +153,7 @@ class LitModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx) -> None:
         """Logs validation loss"""
-        loss = self._step(batch, batch_idx, "valid")
-        return loss
+        return self._step(batch, batch_idx, "valid")
 
     def test_step(self, batch, batch_idx):
         """Logs test loss"""

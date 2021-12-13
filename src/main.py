@@ -6,8 +6,8 @@ from dataset import CompressedAudioDataset
 
 
 def main():
-    # dataset_examples()
-    train.train()
+    dataset_examples()
+    # train.train()
 
 
 def dataset_examples():
@@ -29,8 +29,7 @@ def plot_spec_and_play(waveform, sample_rate, title="Spectrogram"):
     n_fft = sample_rate // (2 ** 5)
     spec = torch.stft(waveform, return_complex=False, n_fft=n_fft)
     audio_utils.plot_specgram(
-        spec, sample_rate, n_fft=n_fft,
-        ylim_freq=None, n_yticks=13, title=title
+        spec, sample_rate, n_fft=n_fft, ylim_freq=None, n_yticks=13, title=title
     )
     audio_utils.play_audio(waveform, sample_rate, button_text=f"Play {title}")
 
