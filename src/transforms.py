@@ -7,13 +7,14 @@ import audio_utils
 
 
 class STFT(Module):
-    def __init__(self, return_sample_rate=False) -> None:
+    def __init__(self, n_fft, return_sample_rate=False) -> None:
+        self.n_fft = n_fft
         self.return_sample_rate = return_sample_rate
         super().__init__()
 
     def forward(self, x):
         waveform, sample_rate = x
-        n_fft = sample_rate // (2 ** 5)
+        n_fft = self.n_fft or sample_rate // (2 ** 5)
         x = torch.stft(waveform, return_complex=True, n_fft=n_fft)
         if self.return_sample_rate:
             return x, sample_rate
@@ -50,6 +51,17 @@ class PadToSize(Module):
             return x
 
 
+class RandomSubsample(Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, waveform):
+        waveform, sample_rate = waveform
+        offset = torch.randint(0, waveform.shape[-1], (1,))
+        waveform = waveform[:, offset:]
+        return waveform, sample_rate
+
+
 class DisplayTensor(Module):
     """Plots a spectrogram. Input must be tuple of (stft, sample_rate)"""
 
@@ -59,9 +71,7 @@ class DisplayTensor(Module):
     def forward(self, x):
         spec, sample_rate = x
         spec = torch.view_as_real(spec)
-        audio_utils.plot_specgram(
-            spec, sample_rate, n_fft=sample_rate // (2 ** 5)
-        )
+        audio_utils.plot_specgram(spec, sample_rate, n_fft=sample_rate // (2 ** 5))
         plt.show()
         return x
 
@@ -93,7 +103,9 @@ class PrintShape(Module):
 class ViewAsReal(Module):
     """Represents complex type as [real, img]."""
 
-    def __init__(self, ) -> None:
+    def __init__(
+        self,
+    ) -> None:
         super().__init__()
 
     def forward(self, x):

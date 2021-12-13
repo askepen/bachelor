@@ -10,6 +10,7 @@ def train():
     parser = ArgumentParser()
     parser.add_argument("--data_dir", type=str, default="./data")
     parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--n_fft", type=int, default=None)
     parser.add_argument("--stft_width", type=int, default=285)
     parser.add_argument("--stft_height_out", type=int, default=751)
     parser.add_argument("--wandb", type=bool, default=False)

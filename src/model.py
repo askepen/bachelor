@@ -123,7 +123,8 @@ class LitModel(pl.LightningModule):
 
         if (
             self.output_result_every_n_steps is not None
-            and batch_idx % self.output_result_every_n_steps == 0
+            and self.global_step % self.output_result_every_n_steps == 0
+            and step_name == "train"
         ):
             logging_utils.log_image(y, pred, y_sr)
             logging_utils.log_audio(y, pred, y_sr)
