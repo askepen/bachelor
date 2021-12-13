@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, random_split
 class CompressedAudioDataModule(LightningDataModule):
     """PyTorch-Lightning data module for the compressed audio dataset"""
 
-    def __init__(self, data_dir, batch_size, n_fft, stft_width):
+    def __init__(self, data_dir, batch_size, n_fft, stft_width, stft_height):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
@@ -17,7 +17,7 @@ class CompressedAudioDataModule(LightningDataModule):
         self.transform = nn.Sequential(
             transforms.RandomSubsample(),
             transforms.STFT(n_fft),
-            transforms.PadToSize(stft_width),
+            transforms.PadToSize([stft_height, stft_width]),
             transforms.ViewAsReal(),
         )
 

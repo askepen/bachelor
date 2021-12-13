@@ -39,7 +39,7 @@ class LitModel(pl.LightningModule):
             ]
         )
         self.bottom = self.block(512, 1024)
-        self.up = nn.UpsamplingBilinear2d(scale_factor=(3.2, 2))
+        self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
         self.up_blocks = torch.nn.ModuleList(
             [
                 self.block(1024, 512, with_concat=True),

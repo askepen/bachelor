@@ -4,6 +4,7 @@ from torch.nn import Module
 import seaborn as sns
 from matplotlib import pyplot as plt
 import audio_utils
+import numpy as np
 
 
 class STFT(Module):
@@ -42,9 +43,13 @@ class PadToSize(Module):
     def forward(self, x):
         if self.has_sample_rate:
             x, sample_rate = x
-        shape_diff = [0, self.shape - x.shape[-1]]
+
+        y_diff = self.shape[-1] - x.shape[-1]
+        x_diff = self.shape[-2] - x.shape[-2]
+
         x = x.squeeze()
-        x = F.pad(x, pad=shape_diff, value=0)
+        x = F.pad(x, pad=[0, y_diff, 0, x_diff], value=0)
+
         if self.has_sample_rate:
             return x, sample_rate
         else:
@@ -57,7 +62,8 @@ class RandomSubsample(Module):
 
     def forward(self, waveform):
         waveform, sample_rate = waveform
-        offset = torch.randint(0, waveform.shape[-1], (1,))
+        length = waveform.shape[-1]
+        offset = torch.randint(int(length * 0.2), int(length * 0.8), (1,))
         waveform = waveform[:, offset:]
         return waveform, sample_rate
 
