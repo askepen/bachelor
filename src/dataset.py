@@ -1,4 +1,3 @@
-from functools import cache
 import os
 from typing import Tuple, List
 from urllib.request import urlretrieve
@@ -118,8 +117,7 @@ class CompressedAudioDataset(Dataset):
             _ = Parallel(n_jobs=n_jobs)(
                 map(
                     delayed(self._generate_gsm_sample),
-                    tqdm(os.listdir(self.data_path_wav),
-                         desc="Generating GSM samples"),
+                    tqdm(os.listdir(self.data_path_wav), desc="Generating GSM samples"),
                 )
             )
 
@@ -155,11 +153,9 @@ class CompressedAudioDataset(Dataset):
         dir = os.path.join(self.data_path_wav)
         return len(os.listdir(dir))
 
-    @cache
     def _wav_filenames(self):
         return os.listdir(self.data_path_wav)
 
-    @cache
     def _filename_pairs(self) -> List[Tuple[str, str]]:
         """
         Returns a list of tuples `(gsm_path, wav_path)` containing pairs of paths
@@ -177,7 +173,7 @@ class CompressedAudioDataset(Dataset):
         """
         ### Returns
         `((gsm_tensor, gsm_sr), (wav_tensor, wav_sr))`:
-        A tuple of the compressed speech audio + sample rate and the 
+        A tuple of the compressed speech audio + sample rate and the
         corresponding target audio + sample rate
         """
         gsm_path, wav_path = self._filename_pairs()[index]
@@ -194,7 +190,9 @@ class CompressedAudioDataset(Dataset):
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 
     def numpy(self) -> np.ndarray:
-        return np.transpose([
-            ((gsm[0].numpy(), gsm[1]), (wav[0].numpy(), wav[1]))
-            for (gsm, wav) in tqdm(self, desc="Loading dataset into memory")
-        ])
+        return np.transpose(
+            [
+                ((gsm[0].numpy(), gsm[1]), (wav[0].numpy(), wav[1]))
+                for (gsm, wav) in tqdm(self, desc="Loading dataset into memory")
+            ]
+        )
