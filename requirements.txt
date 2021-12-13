@@ -1,4 +1,4 @@
-# soundfile # Windows backend for torchaudio
+soundfile # Windows backend for torchaudio
 sox == 1.4.1 # Unix/MacOS backend for torchaudio
 numpy == 1.21.2
 torch == 1.10.0

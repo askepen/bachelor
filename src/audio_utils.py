@@ -10,6 +10,7 @@ from IPython.display import display
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
 import torchaudio
+import PIL
 
 
 def Audio(audio: np.ndarray, rate: int, button_text: str = "Play"):
@@ -60,6 +61,7 @@ def plot_specgram(
     n_yticks=12,
     ylim_freq=None,
     save_path=None,
+    return_pil=False,
 ):
     """
     Plots a spectrogram given a tensor with shape [1, B, N, 2].
@@ -71,7 +73,7 @@ def plot_specgram(
     spec = np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + np.abs(
         spec_tensor.squeeze().numpy()[:, :, 1]
     )
-    _fig, ax = plt.subplots(1, 1, dpi=192, figsize=(12.5, 6))
+    fig, ax = plt.subplots(1, 1, dpi=72, figsize=(12.5, 6))
     sns.heatmap(spec, norm=LogNorm(), ax=ax, cmap="gist_heat")
 
     # Set y-ticks to frequencies in Hz. Computed using the
@@ -97,7 +99,15 @@ def plot_specgram(
 
     if save_path is not None:
         plt.savefig(save_path, dpi=72)
+
+    if return_pil:
+        fig.canvas.draw()
+        img = PIL.Image.frombytes(
+            "RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb()
+        )
+
         plt.clf()
+        return img
     else:
         plt.show(block=False)
 

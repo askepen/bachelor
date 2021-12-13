@@ -9,7 +9,7 @@ from torch import nn
 # )
 from torch.nn import Conv2d, ReLU, MaxPool2d
 from torchvision.transforms import CenterCrop
-import audio_utils
+import logging_utils
 
 
 class LitModel(pl.LightningModule):
@@ -114,23 +114,6 @@ class LitModel(pl.LightningModule):
 
         return x
 
-    def save_sample(self, x, sr: torch.Tensor, name):
-        x, sr = x.detach()[0], sr.detach()[0]
-        sr = sr.item()
-        n_fft = sr // (2 ** 5)
-        audio_utils.plot_specgram(
-            x,
-            sr,
-            n_fft=n_fft,
-            ylim_freq=None,
-            n_yticks=13,
-            title=name,
-            save_path=f"output/{name}.png",
-        )
-        x = torch.view_as_complex(x.contiguous())
-        waveform = torch.istft(x, n_fft)
-        audio_utils.save_audio(waveform, sr, f"output/{name}.wav")
-
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, x_sr), (y, y_sr) = batch
@@ -142,9 +125,9 @@ class LitModel(pl.LightningModule):
             self.output_result_every_n_steps is not None
             and batch_idx % self.output_result_every_n_steps == 0
         ):
-            self.save_sample(x, x_sr, f"{batch_idx}-x")
-            self.save_sample(y, y_sr, f"{batch_idx}-y")
-            self.save_sample(pred, y_sr, f"{batch_idx}-pred")
+            logging_utils.log_image(y, pred, y_sr)
+            logging_utils.log_audio(y, pred, y_sr)
+
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
