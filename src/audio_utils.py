@@ -70,6 +70,7 @@ def plot_specgram(
     - B: Number of bins,
     - N: Number of samples
     """
+    spec_tensor = spec_tensor.detach()
     spec = np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + np.abs(
         spec_tensor.squeeze().numpy()[:, :, 1]
     )
