@@ -38,9 +38,9 @@ class ImagePredictionLogger(Callback):
         self.n_samples = n_samples
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        (x_b, _), (y_b, y_sr) = batch
-        x_batch = x_b.detach().cpu()[:self.n_samples]
-        y_batch = y_b.detach().cpu()[:self.n_samples]
+        (x_batch, _), (y_batch, y_sr) = batch
+        x_batch = x_batch.detach().cpu()[:self.n_samples]
+        y_batch = y_batch.detach().cpu()[:self.n_samples]
         y_sr = y_sr.detach().cpu()
 
         pred_batch = pl_module(x_batch)
@@ -61,5 +61,3 @@ class ImagePredictionLogger(Callback):
             "image predictions": pred_imgs,
             "audio predictions": pred_audio,
         }, commit=False)
-
-        x_b, y_b = x_b.to(trainer.device), y_b.to(trainer.device)

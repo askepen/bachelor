@@ -85,6 +85,7 @@ class LitModel(pl.LightningModule):
 
         skip = []
 
+        print(self.device, x.device)
         for block in self.down_blocks:
             x = block(x)
             skip.append(x)
