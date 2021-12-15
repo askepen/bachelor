@@ -9,7 +9,6 @@ from torch import nn
 # )
 from torch.nn import Conv2d, ReLU, MaxPool2d
 from torchvision.transforms import CenterCrop
-import logging_utils
 
 
 class LitModel(pl.LightningModule):
@@ -110,7 +109,7 @@ class LitModel(pl.LightningModule):
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
-        x, y = x.to(self.device), y.to(self.device)
+        x, y = x.to(device=self.device), y.to(device=self.device)
 
         pred = self(x)
         loss = self.loss_fn(pred, y)
