@@ -76,6 +76,8 @@ class LitModel(pl.LightningModule):
         return CenterCrop(shape_to_match[-2:])(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x.to(device=self.device)
+
         # Convert real/imag axes to channels
         x = x.permute(0, 3, 1, 2)
 
