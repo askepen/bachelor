@@ -19,14 +19,12 @@ class LitModel(pl.LightningModule):
         stft_height,
         lr,
         num_blocks,
-        output_result_every_n_steps,
         **kwargs,
     ):
         super().__init__()
         self.out_size = [stft_height, stft_width]
         self.lr = lr
         self.num_blocks = num_blocks
-        self.output_result_every_n_steps = output_result_every_n_steps
 
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
@@ -52,8 +50,6 @@ class LitModel(pl.LightningModule):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=3)
-        parser.add_argument("--output_result_every_n_steps",
-                            type=int, default=20)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
@@ -116,14 +112,6 @@ class LitModel(pl.LightningModule):
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
-
-        if (
-            self.output_result_every_n_steps is not None
-            and self.global_step % self.output_result_every_n_steps == 0
-            and step_name == "train"
-        ):
-            # logging_utils.log_image(y, pred, y_sr)
-            logging_utils.log_audio(y, pred, y_sr)
 
         return loss
 

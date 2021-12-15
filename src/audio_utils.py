@@ -61,7 +61,7 @@ def plot_specgram(
     n_yticks=12,
     ylim_freq=None,
     save_path=None,
-    return_pil=False,
+    return_fig=False,
 ):
     """
     Plots a spectrogram given a tensor with shape [1, B, N, 2].
@@ -69,8 +69,13 @@ def plot_specgram(
 
     - B: Number of bins,
     - N: Number of samples
+
+    # Returns:
+    If return_fig=True a pyplot figure object will be returned. 
+    It is the users responsibility to close the figure object, by 
+    calling (`plt.close(fig)`) once it's no longer needed.
     """
-    spec_tensor = spec_tensor.detach().cpu()
+    # spec_tensor = spec_tensor.detach().cpu()
     spec = np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + np.abs(
         spec_tensor.squeeze().numpy()[:, :, 1]
     )
@@ -80,7 +85,8 @@ def plot_specgram(
     # Set y-ticks to frequencies in Hz. Computed using the
     # implementation of librosa.fft_frequencies:
     # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
-    freqs = np.linspace(0, float(sample_rate) / 2, 1 + n_fft // 2, dtype=np.int)
+    freqs = np.linspace(0, float(sample_rate) / 2,
+                        1 + n_fft // 2, dtype=np.int)
     ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
     ax.set_yticks(ytick_idx)
     ax.set_yticklabels(freqs[ytick_idx])
@@ -101,16 +107,12 @@ def plot_specgram(
     if save_path is not None:
         plt.savefig(save_path, dpi=72)
 
-    if return_pil:
-        fig.canvas.draw()
-        img = PIL.Image.frombytes(
-            "RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb()
-        )
-
-        plt.clf()
-        return img
+    if return_fig:
+        return fig
     else:
         plt.show(block=False)
+
+    plt.close(fig)
 
 
 def plot_specgram_from_waveform(
@@ -129,10 +131,12 @@ def play_audio(waveform, sample_rate, button_text="Play"):
         display(Audio(waveform[0], rate=sample_rate, button_text=button_text))
     elif num_channels == 2:
         display(
-            Audio((waveform[0], waveform[1]), rate=sample_rate, button_text=button_text)
+            Audio((waveform[0], waveform[1]),
+                  rate=sample_rate, button_text=button_text)
         )
     else:
-        raise ValueError("Waveform with more than 2 channels are not supported.")
+        raise ValueError(
+            "Waveform with more than 2 channels are not supported.")
 
 
 def save_audio(waveform, sample_rate, path):
