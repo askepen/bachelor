@@ -8,3 +8,4 @@ wandb
 .DS_Store
 output/
 data.zip
+checkpoints/
