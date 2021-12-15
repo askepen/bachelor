@@ -46,7 +46,7 @@ class PadToSize(Module):
         x_diff = self.shape[-2] - x.shape[-2]
 
         x = x.squeeze()
-        x = F.pad(x, pad=[0, y_diff, 0, x_diff], value=1.0)
+        x = F.pad(x, pad=[0, y_diff, 0, x_diff], value=0.0)
 
         if self.has_sample_rate:
             return x, sample_rate
