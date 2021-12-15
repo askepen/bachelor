@@ -33,7 +33,7 @@ def get_wandb_audio(x, sr):
 
 
 class ImagePredictionLogger(Callback):
-    def __init__(self, n_samples, log_every_n_steps):
+    def __init__(self, n_samples, log_every_n_steps=10):
         super().__init__()
         self.n_samples = n_samples
 
