@@ -37,9 +37,7 @@ def train(args: Namespace):
     trainer = pl.Trainer.from_argparse_args(
         args, logger=logger, callbacks=cb_log_prediction
     )
-    data_module = CompressedAudioDataModule.from_argparse_args(
-        args, device=model.device
-    )
+    data_module = CompressedAudioDataModule.from_argparse_args(args)
 
     trainer.fit(model, data_module)
 

@@ -20,7 +20,6 @@ class CompressedAudioDataModule(LightningDataModule):
         stft_width,
         stft_height,
         train_set_fraction,
-        device,
         **kwargs
     ):
         super().__init__()
@@ -28,7 +27,6 @@ class CompressedAudioDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.train_set_fraction = train_set_fraction
-        self.device = device
         self.transform = nn.Sequential(
             transforms.RandomSubsample(),
             transforms.STFT(n_fft),
