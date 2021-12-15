@@ -37,10 +37,12 @@ class CompressedAudioDataset(Dataset):
         force_download: bool = False,
         force_generate: bool = False,
         transform: torch.nn.Module = None,
+        device: torch.device = None
     ) -> None:
         super().__init__()
 
         self.transform = transform
+        self.device = device
 
         if train:
             self.data_url = CLEAN_TRAINSET_56SPK_URL
@@ -117,7 +119,8 @@ class CompressedAudioDataset(Dataset):
             _ = Parallel(n_jobs=n_jobs)(
                 map(
                     delayed(self._generate_gsm_sample),
-                    tqdm(os.listdir(self.data_path_wav), desc="Generating GSM samples"),
+                    tqdm(os.listdir(self.data_path_wav),
+                         desc="Generating GSM samples"),
                 )
             )
 
@@ -181,9 +184,13 @@ class CompressedAudioDataset(Dataset):
         gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
         wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
 
+        if self.device is not None:
+            gsm_tensor = gsm_tensor.to(device=self.device)
+            wav_tensor = wav_tensor.to(device=self.device)
+            # gsm_sr = torch.tensor(gsm_sr, device=self.device)
+            # wav_sr = torch.tensor(wav_sr, device=self.device)
+
         if self.transform is not None:
-            # gsm_tensor = self.transform.forward(gsm_tensor)
-            # wav_tensor = self.transform.forward(wav_tensor)
             gsm_tensor = self.transform.forward((gsm_tensor, gsm_sr))
             wav_tensor = self.transform.forward((wav_tensor, wav_sr))
 

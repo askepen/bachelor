@@ -31,14 +31,16 @@ def train(args: Namespace):
     model = LitModel(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     logger.watch(model, log_freq=500)
-    data_module = CompressedAudioDataModule.from_argparse_args(args)
     cb_log_prediction = ImagePredictionLogger(
         args.log_n_samples, args.log_prediction_freq
     )
-
     trainer = pl.Trainer.from_argparse_args(
         args, logger=logger, callbacks=cb_log_prediction
     )
+    data_module = CompressedAudioDataModule.from_argparse_args(
+        args, device=model.device
+    )
+
     trainer.fit(model, data_module)
 
 

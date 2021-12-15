@@ -1,10 +1,8 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Module
-import seaborn as sns
 from matplotlib import pyplot as plt
 import audio_utils
-import numpy as np
 
 
 class STFT(Module):
@@ -77,7 +75,8 @@ class DisplayTensor(Module):
     def forward(self, x):
         spec, sample_rate = x
         spec = torch.view_as_real(spec)
-        audio_utils.plot_specgram(spec, sample_rate, n_fft=sample_rate // (2 ** 5))
+        audio_utils.plot_specgram(
+            spec, sample_rate, n_fft=sample_rate // (2 ** 5))
         plt.show()
         return x
 
