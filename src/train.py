@@ -42,4 +42,4 @@ def train(args: Namespace):
 
 
 if __name__ == "__main__":
-    train_from_dict(dict())
+    train_from_argparse()
