@@ -36,6 +36,7 @@ class ImagePredictionLogger(Callback):
     def __init__(self, n_samples, log_every_n_steps=10):
         super().__init__()
         self.n_samples = n_samples
+        self.log_every_n_steps = log_every_n_steps
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         if batch_idx % self.log_every_n_steps != 0:
