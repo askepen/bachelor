@@ -22,7 +22,6 @@ def train_from_argparse():
     parser = ArgumentParser()
     parser.add_argument("--wandb", type=bool, default=False)
     parser.add_argument("--log_n_samples", type=int, default=4)
-    parser.add_argument("--log_every_n_steps", type=int, default=10)
     parser = Trainer.add_argparse_args(parser)
     parser = CompressedAudioDataModule.add_argparse_args(parser)
     parser = LitModel.add_model_specific_args(parser)
