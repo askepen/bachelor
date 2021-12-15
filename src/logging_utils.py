@@ -61,3 +61,5 @@ class ImagePredictionLogger(Callback):
             "image predictions": pred_imgs,
             "audio predictions": pred_audio,
         }, commit=False)
+
+        x_b, y_b = x_b.to(trainer.device), y_b.to(trainer.device)
