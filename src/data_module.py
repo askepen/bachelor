@@ -32,7 +32,7 @@ class CompressedAudioDataModule(LightningDataModule):
             transforms.STFT(n_fft),
             transforms.PadToSize([stft_height, stft_width]),
             transforms.ViewAsReal(),
-        ).to(self.device)
+        )
 
     @staticmethod
     def add_argparse_args(parent_parser):
@@ -58,7 +58,7 @@ class CompressedAudioDataModule(LightningDataModule):
         """
         if stage == "fit" or stage is None:
             dataset_train = CompressedAudioDataset(
-                self.data_dir, train=True, transform=self.transform, device=self.device
+                self.data_dir, train=True, transform=self.transform
             )
             lengths = [
                 round(self.train_set_fraction * len(dataset_train)),
@@ -69,7 +69,7 @@ class CompressedAudioDataModule(LightningDataModule):
             )
         if stage == "test" or stage is None:
             self.dataset_test = CompressedAudioDataset(
-                self.data_dir, train=False, transform=self.transform, device=self.device
+                self.data_dir, train=False, transform=self.transform
             )
 
     def train_dataloader(self):

@@ -110,7 +110,6 @@ class LitModel(pl.LightningModule):
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
-        x, y = x.to(device=self.device), y.to(device=self.device)
 
         pred = self(x)
         loss = self.loss_fn(pred, y)
