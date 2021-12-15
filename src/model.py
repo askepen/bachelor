@@ -108,11 +108,12 @@ class LitModel(pl.LightningModule):
 
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
-        (x, x_sr), (y, y_sr) = batch
+        (x, _), (y, _) = batch
+        x, y = x.to(self.device), y.to(self.device)
+
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
-
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
