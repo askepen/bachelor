@@ -7,7 +7,7 @@ from torch import nn
 #     #     ComplexReLU as ReLU,
 #     ComplexMaxPool2d as MaxPool2d,
 # )
-from torch.nn import Conv2d, ReLU, MaxPool2d
+from torch.nn import Conv2d, LeakyReLU, MaxPool2d
 from torchvision.transforms import CenterCrop
 
 
@@ -19,6 +19,7 @@ class LitModel(pl.LightningModule):
         lr,
         num_blocks,
         optim,
+        kernel_size,
         **kwargs,
     ):
         super().__init__()
@@ -26,6 +27,7 @@ class LitModel(pl.LightningModule):
         self.lr = lr
         self.optim = optim
         self.num_blocks = num_blocks
+        self.kernel_size = kernel_size
 
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
@@ -52,6 +54,7 @@ class LitModel(pl.LightningModule):
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=3)
         parser.add_argument("--optim", type=str, default="adam")
+        parser.add_argument("--kernel_size", type=int, default=3)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
@@ -60,19 +63,19 @@ class LitModel(pl.LightningModule):
             Conv2d(
                 in_channels,
                 out_channels,
-                kernel_size=3,
-                padding=1,
-                padding_mode="circular",
+                kernel_size=self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
             ),
-            ReLU(),
+            LeakyReLU(),
             Conv2d(
                 out_channels,
                 out_channels,
-                kernel_size=3,
-                padding=1,
-                padding_mode="circular",
+                kernel_size=self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
             ),
-            ReLU(),
+            LeakyReLU(),
         )
 
     def crop_width_height(self, x, shape_to_match):
@@ -83,9 +86,6 @@ class LitModel(pl.LightningModule):
 
         # Convert real/imag axes to channels
         x = x.permute(0, 3, 1, 2)
-
-        # Make output shape match input shape if it not specified
-        self.out_size = self.out_size or x.shape
 
         skip = []
 
