@@ -51,8 +51,8 @@ class CompressedAudioDataModule(LightningDataModule):
                 self.data_dir, train=True, transform=self.transform
             )
             lengths = [
-                int(self.train_set_fraction * len(dataset_train)),
-                int((1.0 - self.train_set_fraction) * len(dataset_train)),
+                round(self.train_set_fraction * len(dataset_train)),
+                round((1.0 - self.train_set_fraction) * len(dataset_train)),
             ]
             self.dataset_train, self.dataset_val = random_split(
                 dataset_train, lengths
