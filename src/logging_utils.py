@@ -38,6 +38,9 @@ class ImagePredictionLogger(Callback):
         self.n_samples = n_samples
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        if batch_idx % self.log_every_n_steps != 0:
+            return
+
         (x_batch, _), (y_batch, y_sr) = batch
         x_batch = x_batch.detach().cpu()[:self.n_samples]
         y_batch = y_batch.detach().cpu()[:self.n_samples]
