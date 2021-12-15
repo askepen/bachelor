@@ -27,8 +27,9 @@ def train_from_argparse():
 
 
 def train(args: Namespace):
-    logger = WandbLogger(project="Bachelor") if args.wandb else None
     model = LitModel(**vars(args))
+    logger = WandbLogger(project="Bachelor") if args.wandb else None
+    logger.watch(model, log_freq=500)
     data_module = CompressedAudioDataModule.from_argparse_args(args)
     cb_log_prediction = ImagePredictionLogger(
         args.log_n_samples, args.log_every_n_steps
@@ -37,7 +38,6 @@ def train(args: Namespace):
     trainer = pl.Trainer.from_argparse_args(
         args, logger=logger, callbacks=cb_log_prediction
     )
-
     trainer.fit(model, data_module)
 
 
