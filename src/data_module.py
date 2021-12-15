@@ -19,6 +19,7 @@ class CompressedAudioDataModule(LightningDataModule):
         n_fft,
         stft_width,
         stft_height,
+        trim_left,
         train_set_fraction,
         **kwargs
     ):
@@ -29,6 +30,7 @@ class CompressedAudioDataModule(LightningDataModule):
         self.train_set_fraction = train_set_fraction
         self.transform = nn.Sequential(
             # transforms.RandomSubsample(),
+            transforms.Trim(left=trim_left),
             transforms.STFT(n_fft),
             transforms.PadToSize([stft_height, stft_width]),
             transforms.ViewAsReal(),
@@ -44,6 +46,8 @@ class CompressedAudioDataModule(LightningDataModule):
         parser.add_argument("--stft_width", type=int, default=285)
         parser.add_argument("--stft_height", type=int, default=751)
         parser.add_argument("--train_set_fraction", type=float, default=0.8)
+        parser.add_argument("--trim_left", type=float, default=0.0)
+        parser.add_argument("--trim_right", type=float, default=0.0)
         return parent_parser
 
     def prepare_data(self):

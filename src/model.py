@@ -18,11 +18,13 @@ class LitModel(pl.LightningModule):
         stft_height,
         lr,
         num_blocks,
+        optim,
         **kwargs,
     ):
         super().__init__()
         self.out_size = [stft_height, stft_width]
         self.lr = lr
+        self.optim = optim
         self.num_blocks = num_blocks
 
         self.loss_fn = nn.MSELoss(reduction="sum")
@@ -49,6 +51,7 @@ class LitModel(pl.LightningModule):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=3)
+        parser.add_argument("--optim", type=str, default="adam")
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
@@ -129,4 +132,9 @@ class LitModel(pl.LightningModule):
         return self._step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        if self.optim == "adam":
+            return torch.optim.Adam(self.parameters(), lr=self.lr)
+        elif self.optim == "sgd":
+            return torch.optim.SGD(self.parameters(), lr=self.lr, momentum=self.momentum)
+        else:
+            raise Exception(f"Optimizer '{self.optim}' not recognized")

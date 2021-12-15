@@ -66,6 +66,20 @@ class RandomSubsample(Module):
         return waveform, sample_rate
 
 
+class Trim(Module):
+    def __init__(self, left=0.0, right=1.0) -> None:
+        super().__init__()
+        self.left = left
+        self.right = 1.0 - right
+
+    def forward(self, waveform):
+        waveform, sample_rate = waveform
+        length = waveform.shape[-1]
+        idx_left, idx_right = int(length * self.left), int(length * self.right)
+        waveform = waveform[:, idx_left:idx_right]
+        return waveform, sample_rate
+
+
 class DisplayTensor(Module):
     """Plots a spectrogram. Input must be tuple of (stft, sample_rate)"""
 
