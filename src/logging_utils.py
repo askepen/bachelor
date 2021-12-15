@@ -33,18 +33,18 @@ def get_wandb_audio(x, sr):
 
 
 class ImagePredictionLogger(Callback):
-    def __init__(self, n_samples):
+    def __init__(self, n_samples, log_every_n_steps):
         super().__init__()
         self.n_samples = n_samples
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         (x_batch, _), (y_batch, y_sr) = batch
-        x_batch = x_batch.to(device=pl_module.device)[:self.n_samples]
-        y_batch = y_batch.to(device=pl_module.device)[:self.n_samples]
-        y_sr = y_sr.to(device=pl_module.device)
+        x_batch = x_batch.cpu()[:self.n_samples]
+        y_batch = y_batch.cpu()[:self.n_samples]
+        y_sr = y_sr.cpu()
 
         pred_batch = pl_module(x_batch)
-        pred_batch = pred_batch.detach().to(device=pl_module.device)
+        pred_batch = pred_batch.detach().cpu()
 
         y_imgs, y_audio, pred_imgs, pred_audio = zip(*[
             [
