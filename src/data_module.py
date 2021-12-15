@@ -11,11 +11,12 @@ from torch.utils.data import DataLoader, random_split
 class CompressedAudioDataModule(LightningDataModule):
     """PyTorch-Lightning data module for the compressed audio dataset"""
 
-    def __init__(self, data_dir, batch_size, num_workers, n_fft, stft_width, stft_height, **kwargs):
+    def __init__(self, data_dir, batch_size, num_workers, n_fft, stft_width, stft_height, train_set_fraction, **kwargs):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.train_set_fraction = train_set_fraction
         self.transform = nn.Sequential(
             transforms.RandomSubsample(),
             transforms.STFT(n_fft),
@@ -32,6 +33,7 @@ class CompressedAudioDataModule(LightningDataModule):
         parser.add_argument("--n_fft", type=int, default=None)
         parser.add_argument("--stft_width", type=int, default=285)
         parser.add_argument("--stft_height", type=int, default=751)
+        parser.add_argument("--train_set_fraction", type=float, default=0.8)
         return parent_parser
 
     def prepare_data(self):
@@ -48,9 +50,13 @@ class CompressedAudioDataModule(LightningDataModule):
             dataset_train = CompressedAudioDataset(
                 self.data_dir, train=True, transform=self.transform
             )
-            lengths = [round(x * len(dataset_train)) for x in [0.15, 0.85]]
+            lengths = [
+                int(self.train_set_fraction * len(dataset_train)),
+                int((1.0 - self.train_set_fraction) * len(dataset_train)),
+            ]
             self.dataset_train, self.dataset_val = random_split(
-                dataset_train, lengths)
+                dataset_train, lengths
+            )
         if stage == "test" or stage is None:
             self.dataset_test = CompressedAudioDataset(
                 self.data_dir, train=False, transform=self.transform
