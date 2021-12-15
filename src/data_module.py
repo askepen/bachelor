@@ -48,7 +48,7 @@ class CompressedAudioDataModule(LightningDataModule):
             dataset_train = CompressedAudioDataset(
                 self.data_dir, train=True, transform=self.transform
             )
-            lengths = [round(x * len(dataset_train)) for x in [0.25, 0.75]]
+            lengths = [round(x * len(dataset_train)) for x in [0.15, 0.85]]
             self.dataset_train, self.dataset_val = random_split(
                 dataset_train, lengths)
         if stage == "test" or stage is None:
