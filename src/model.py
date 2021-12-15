@@ -30,26 +30,21 @@ class LitModel(pl.LightningModule):
 
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
-        self.down_blocks = torch.nn.ModuleList(
-            [
-                self.block(2, 64),
-                self.block(64, 128),
-                self.block(128, 256),
-                self.block(256, 512),
-            ]
-        )
+        self.down_blocks = torch.nn.ModuleList([
+            self.block(2, 64),
+            self.block(64, 128),
+            self.block(128, 256),
+            self.block(256, 512),
+        ])
         self.bottom = self.block(512, 1024)
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
-        self.up_blocks = torch.nn.ModuleList(
-            [
-                self.block(1024, 512, with_concat=True),
-                self.block(512, 256, with_concat=True),
-                self.block(256, 128, with_concat=True),
-                self.block(128, 64, with_concat=True),
-            ]
-        )
+        self.up_blocks = torch.nn.ModuleList([
+            self.block(1024, 512, with_concat=True),
+            self.block(512, 256, with_concat=True),
+            self.block(256, 128, with_concat=True),
+            self.block(128, 64, with_concat=True),
+        ])
         self.out = Conv2d(in_channels=64, out_channels=2, kernel_size=1)
-
         self.save_hyperparameters()
 
     @staticmethod
@@ -57,7 +52,8 @@ class LitModel(pl.LightningModule):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--num_blocks", type=int, default=3)
-        parser.add_argument("--output_result_every_n_steps", type=int, default=20)
+        parser.add_argument("--output_result_every_n_steps",
+                            type=int, default=20)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):
@@ -126,7 +122,7 @@ class LitModel(pl.LightningModule):
             and self.global_step % self.output_result_every_n_steps == 0
             and step_name == "train"
         ):
-            logging_utils.log_image(y, pred, y_sr)
+            # logging_utils.log_image(y, pred, y_sr)
             logging_utils.log_audio(y, pred, y_sr)
 
         return loss
