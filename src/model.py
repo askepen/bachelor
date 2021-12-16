@@ -17,22 +17,26 @@ class LitModel(pl.LightningModule):
         stft_width,
         stft_height,
         lr,
+        momentum,
         num_blocks,
         optim,
         kernel_size,
+        in_channels,
+        out_channels,
         **kwargs,
     ):
         super().__init__()
         self.out_size = [stft_height, stft_width]
-        self.lr = lr
         self.optim = optim
+        self.lr = lr
+        self.momentum = momentum
         self.num_blocks = num_blocks
         self.kernel_size = kernel_size
 
         self.loss_fn = nn.MSELoss(reduction="sum")
         self.down = MaxPool2d(2, ceil_mode=True)
         self.down_blocks = torch.nn.ModuleList([
-            self.block(2, 64),
+            self.block(in_channels, 64),
             self.block(64, 128),
             self.block(128, 256),
             self.block(256, 512),
@@ -45,16 +49,24 @@ class LitModel(pl.LightningModule):
             self.block(256, 128, with_concat=True),
             self.block(128, 64, with_concat=True),
         ])
-        self.out = Conv2d(in_channels=64, out_channels=2, kernel_size=1)
+        self.out = Conv2d(
+            in_channels=64, out_channels=out_channels, kernel_size=1
+        )
         self.save_hyperparameters()
 
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("LitModel")
         parser.add_argument("--lr", type=float, default=1e-3)
+        parser.add_argument(
+            "--momentum", type=float, default=0.0,
+            help="Only for SGD optimizer"
+        )
         parser.add_argument("--num_blocks", type=int, default=3)
         parser.add_argument("--optim", type=str, default="adam")
         parser.add_argument("--kernel_size", type=int, default=3)
+        parser.add_argument("--in_channels", type=int, default=2)
+        parser.add_argument("--out_channels", type=int, default=2)
         return parent_parser
 
     def block(self, in_channels, out_channels, with_concat=False):

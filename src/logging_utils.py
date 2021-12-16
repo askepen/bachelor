@@ -1,12 +1,13 @@
 import torch
+import torchaudio
 import wandb
 import audio_utils
 from pytorch_lightning.callbacks import Callback
 import matplotlib.pyplot as plt
+from torchaudio import transforms as T
 
 
 def get_wandb_image(x, sr, name):
-    # x, sr = x.detach()[0], sr.detach()[0]
     sr = sr.item()
     n_fft = sr // (2 ** 5)
     fig = audio_utils.plot_specgram(
@@ -24,7 +25,6 @@ def get_wandb_image(x, sr, name):
 
 
 def get_wandb_audio(x, sr):
-    # x, sr = x.detach()[0],
     sr = sr.item()
     n_fft = sr // (2 ** 5)
     x = torch.view_as_complex(x.contiguous())

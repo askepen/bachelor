@@ -29,7 +29,6 @@ class CompressedAudioDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.train_set_fraction = train_set_fraction
         self.transform = nn.Sequential(
-            # transforms.RandomSubsample(),
             transforms.Trim(left=trim_left),
             transforms.STFT(n_fft),
             transforms.PadToSize([stft_height, stft_width]),

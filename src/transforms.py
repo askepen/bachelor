@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Module
 from matplotlib import pyplot as plt
-import audio_utils
+from torchaudio import transforms as T
+import torchaudio
 
 
 class STFT(Module):
@@ -21,6 +22,21 @@ class STFT(Module):
             return x
 
 
+class MelScale(Module):
+    def __init__(self, n_mels=128) -> None:
+        self.n_mels = n_mels
+        super().__init__()
+
+    def forward(self, x: torch.Tensor):
+        x, sample_rate = x
+        x = torch.view_as_real(x)
+        n_stft = x.shape[-2]
+        print(x.shape)
+        x = T.MelScale(self.n_mels, sample_rate, n_stft=n_stft)(x)
+        print(x.shape)
+        return x
+
+
 class DropSampleRate(Module):
     """Given a tuple (x, sample_rate) it returns only x"""
 
@@ -29,6 +45,18 @@ class DropSampleRate(Module):
 
     def forward(self, x):
         x, _sample_rate = x
+        return x
+
+
+class EnsureChannel(Module):
+    """Given a tuple (x, sample_rate) it returns only x"""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x: torch.Tensor):
+        if len(x.shape) < 4:
+            x = x.unsqueeze(0)
         return x
 
 
@@ -80,51 +108,10 @@ class Trim(Module):
         return waveform, sample_rate
 
 
-class DisplayTensor(Module):
-    """Plots a spectrogram. Input must be tuple of (stft, sample_rate)"""
-
-    def __init__(self) -> None:
-        super().__init__()
-
-    def forward(self, x):
-        spec, sample_rate = x
-        spec = torch.view_as_real(spec)
-        audio_utils.plot_specgram(
-            spec, sample_rate, n_fft=sample_rate // (2 ** 5))
-        plt.show()
-        return x
-
-
-class PlayWaveform(Module):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def forward(self, x):
-        waveform, sample_rate = x
-        audio_utils.play_audio(waveform, sample_rate)
-        return x
-
-
-class PrintShape(Module):
-    """Prints the size of a tensor. Does not actuaclly transform the input."""
-
-    def __init__(self, annotation="PrintShape()", has_sample_rate=False) -> None:
-        self.annotation = annotation
-        self.has_sample_rate = has_sample_rate
-        super().__init__()
-
-    def forward(self, x):
-        tensor = x[0] if self.has_sample_rate else x
-        print(f"{self.annotation}: {tensor.shape}")
-        return x
-
-
 class ViewAsReal(Module):
     """Represents complex type as [real, img]."""
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, x):
