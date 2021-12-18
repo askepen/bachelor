@@ -11,5 +11,5 @@ joblib == 1.0.1
 scikit-learn == 0.24.2
 seaborn == 0.11.2
 pytorch-lightning==1.5.5
-wandb==0.12.7
+wandb==0.12.9
 # complexPyTorch==0.4

@@ -2,7 +2,8 @@ import pytorch_lightning as pl
 from pytorch_lightning import callbacks
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.trainer.trainer import Trainer
-from model import LitModel
+from models.unet import LitUnet
+from models.cnn import LitCNN
 from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
 from logging_utils import ImagePredictionLogger
@@ -22,13 +23,14 @@ def train_from_argparse():
     parser.add_argument("--log_prediction_freq", type=int, default=4)
     parser = Trainer.add_argparse_args(parser)
     parser = CompressedAudioDataModule.add_argparse_args(parser)
-    parser = LitModel.add_model_specific_args(parser)
+    parser = LitUnet.add_model_specific_args(parser)
     args = parser.parse_args()
     train(args)
 
 
 def train(args: Namespace):
-    model = LitModel(**vars(args))
+    # model = LitUnet(**vars(args))
+    model = LitCNN(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     logger.watch(model, log_freq=500)
     cb_log_prediction = ImagePredictionLogger(
