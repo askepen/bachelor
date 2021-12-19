@@ -23,7 +23,8 @@ def train_from_argparse():
     parser.add_argument("--log_prediction_freq", type=int, default=4)
     parser = Trainer.add_argparse_args(parser)
     parser = CompressedAudioDataModule.add_argparse_args(parser)
-    parser = LitUnet.add_model_specific_args(parser)
+    # parser = LitUnet.add_model_specific_args(parser)
+    parser = LitCNN.add_model_specific_args(parser)
     args = parser.parse_args()
     train(args)
 
