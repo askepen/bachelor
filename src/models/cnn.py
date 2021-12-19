@@ -23,6 +23,7 @@ class LitCNN(pl.LightningModule):
         optim,
         kernel_size,
         in_channels,
+        mid_channels,
         out_channels,
         **kwargs,
     ):
@@ -35,11 +36,11 @@ class LitCNN(pl.LightningModule):
 
         self.loss_fn = nn.MSELoss(reduction="sum")
 
-        self.first = Conv2d(in_channels, 64, 1)
+        self.first = Conv2d(in_channels, mid_channels, 1)
         self.layers = nn.ModuleList(
             [
                 Conv2d(
-                    64, 64, self.kernel_size,
+                    mid_channels, mid_channels, self.kernel_size,
                     padding=self.kernel_size // 2,
                     padding_mode="reflect",
                 ),
@@ -47,7 +48,7 @@ class LitCNN(pl.LightningModule):
                 UpsamplingBilinear2d(scale_factor=1.35),
             ] * 6
         )
-        self.last = Conv2d(64, out_channels, 1)
+        self.last = Conv2d(mid_channels, out_channels, 1)
 
         self.save_hyperparameters()
 
@@ -63,6 +64,7 @@ class LitCNN(pl.LightningModule):
         parser.add_argument("--optim", type=str, default="adam")
         parser.add_argument("--kernel_size", type=int, default=3)
         parser.add_argument("--in_channels", type=int, default=2)
+        parser.add_argument("--mid_channels", type=int, default=32)
         parser.add_argument("--out_channels", type=int, default=2)
         return parent_parser
 
