@@ -82,16 +82,15 @@ def plot_specgram(
         spec_tensor = [spec_tensor]
         axes = [axes]
 
-    specs = []
-    for spec in spec_tensor:
-        spec = torch.linalg.norm(spec, dim=-1)
-        spec = torch.log(spec)
-        specs.append(spec)
+    spec_tensor = [
+        torch.log10(torch.linalg.norm(spec, dim=-1))
+        for spec in spec_tensor
+    ]
 
-    vmin = specs[0].min().item()
-    vmax = specs[0].max().item()
+    vmin = spec_tensor[0].min().item()
+    vmax = spec_tensor[0].max().item()
 
-    for spec, ax in zip(specs, axes):
+    for spec, ax in zip(spec_tensor, axes):
         sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,
                     cmap="gist_heat")
 
