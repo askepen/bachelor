@@ -8,6 +8,8 @@ from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
 from logging_utils import ImagePredictionLogger
 
+MODEL = LitUnet
+
 
 def train_from_dict(args_dict):
     args = Namespace()
@@ -23,15 +25,13 @@ def train_from_argparse():
     parser.add_argument("--log_prediction_freq", type=int, default=4)
     parser = Trainer.add_argparse_args(parser)
     parser = CompressedAudioDataModule.add_argparse_args(parser)
-    # parser = LitUnet.add_model_specific_args(parser)
-    parser = LitCNN.add_model_specific_args(parser)
+    parser = MODEL.add_model_specific_args(parser)
     args = parser.parse_args()
     train(args)
 
 
 def train(args: Namespace):
-    # model = LitUnet(**vars(args))
-    model = LitCNN(**vars(args))
+    model = MODEL(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     logger.watch(model, log_freq=500)
     cb_log_prediction = ImagePredictionLogger(
