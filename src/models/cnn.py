@@ -37,16 +37,49 @@ class LitCNN(pl.LightningModule):
         self.loss_fn = nn.MSELoss(reduction="sum")
 
         self.first = Conv2d(in_channels, mid_channels, 1)
-        self.layers = nn.ModuleList(
-            [
-                Conv2d(
-                    mid_channels, mid_channels, self.kernel_size,
-                    padding=self.kernel_size // 2,
-                    padding_mode="reflect",
-                ),
-                LeakyReLU(),
-                UpsamplingBilinear2d(scale_factor=1.35),
-            ] * 6
+        self.layers = nn.Sequential(
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
+            Conv2d(
+                mid_channels, mid_channels, self.kernel_size,
+                padding=self.kernel_size // 2,
+                padding_mode="reflect",
+            ),
+            LeakyReLU(),
+            UpsamplingBilinear2d(scale_factor=1.35),
         )
         self.last = Conv2d(mid_channels, out_channels, 1)
 
@@ -75,16 +108,20 @@ class LitCNN(pl.LightningModule):
         x = x.to(device=self.device)
         x = x.permute(0, 3, 1, 2)
         x = self.first(x)
-        for layer in self.layers:
-            x = layer(x)
+        # for layer in self.layers:
+        #     x = layer(x)
+        x = self.layers(x)
         x = self.last(x)
         x = self.crop_width_height(x, self.out_size)
         x = x.permute(0, 2, 3, 1)
+
         return x
 
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
+        # x = torch.linalg.norm(x, dim=-1)
+        # y = torch.linalg.norm(y, dim=-1)
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)

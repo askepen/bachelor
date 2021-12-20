@@ -1,6 +1,7 @@
 import json
 
 import IPython.display
+import matplotlib
 import numpy as np
 import seaborn as sns
 import torch
@@ -73,33 +74,48 @@ def plot_specgram(
     calling (`plt.close(fig)`) once it's no longer needed.
     """
     # spec_tensor = spec_tensor.detach().cpu()
-    spec = np.abs(spec_tensor.squeeze().numpy()[:, :, 0]) + np.abs(
-        spec_tensor.squeeze().numpy()[:, :, 1]
-    )
-    fig, ax = plt.subplots(1, 1, dpi=72, figsize=(12.5, 6))
-    sns.heatmap(spec, norm=LogNorm(), ax=ax, cmap="gist_heat")
+    subplots = 2 if isinstance(spec_tensor, tuple) else 1
 
-    # Set y-ticks to frequencies in Hz. Computed using the
-    # implementation of librosa.fft_frequencies:
-    # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
-    freqs = np.linspace(0, float(sample_rate) / 2,
-                        1 + n_fft // 2, dtype=np.int)
-    ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
-    ax.set_yticks(ytick_idx)
-    ax.set_yticklabels(freqs[ytick_idx])
+    fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(12.5, 6))
 
-    # Set upper y-limit given a frequency in Hz
-    if ylim_freq is None:
-        ylim = None
-    elif ylim_freq > freqs[-1]:
-        ylim = ylim_freq / (freqs[-1] / len(freqs))
-    else:
-        ylim = (np.abs(freqs - ylim_freq)).argmin()
-    ax.set_ylim(ylim)
+    if subplots == 1:
+        spec_tensor = [spec_tensor]
+        axes = [axes]
 
-    ax.invert_yaxis()
-    ax.set_title(title)
-    ax.set_ylabel("Frequency [Hz]")
+    specs = []
+    for spec in spec_tensor:
+        spec = torch.linalg.norm(spec, dim=-1)
+        spec = torch.log(spec)
+        specs.append(spec)
+
+    vmin = specs[0].min().item()
+    vmax = specs[0].max().item()
+
+    for spec, ax in zip(specs, axes):
+        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,
+                    cmap="gist_heat")
+
+        # Set y-ticks to frequencies in Hz. Computed using the
+        # implementation of librosa.fft_frequencies:
+        # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
+        freqs = np.linspace(0, float(sample_rate) / 2,
+                            1 + n_fft // 2, dtype=np.int)
+        ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
+        ax.set_yticks(ytick_idx)
+        ax.set_yticklabels(freqs[ytick_idx])
+
+        # Set upper y-limit given a frequency in Hz
+        if ylim_freq is None:
+            ylim = None
+        elif ylim_freq > freqs[-1]:
+            ylim = ylim_freq / (freqs[-1] / len(freqs))
+        else:
+            ylim = (np.abs(freqs - ylim_freq)).argmin()
+        ax.set_ylim(ylim)
+
+        ax.invert_yaxis()
+        ax.set_title(title)
+        ax.set_ylabel("Frequency [Hz]")
 
     if save_path is not None:
         plt.savefig(save_path, dpi=72)

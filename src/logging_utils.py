@@ -50,18 +50,32 @@ class ImagePredictionLogger(Callback):
         pred_batch = pl_module(x_batch)
         pred_batch = pred_batch.detach().cpu()
 
-        y_imgs, y_audio, pred_imgs, pred_audio = zip(*[
+        imgs, y_audio, pred_audio = zip(*[
             [
-                get_wandb_image(y, sr, "y"),
+                get_wandb_image((y, pred), sr, "y/pred"),
                 get_wandb_audio(y, sr),
-                get_wandb_image(pred, sr, "Pred"),
-                get_wandb_audio(pred, sr)
+                get_wandb_audio(pred, sr),
             ] for y, pred, sr in zip(y_batch, pred_batch, y_sr)
         ])
 
         trainer.logger.experiment.log({
-            "image targets": y_imgs,
             "audio targets": y_audio,
-            "image predictions": pred_imgs,
+            "image predictions": imgs,
             "audio predictions": pred_audio,
         }, commit=False)
+
+        # y_imgs, y_audio, pred_imgs, pred_audio = zip(*[
+        #     [
+        #         get_wandb_image(y, sr, "y"),
+        #         get_wandb_audio(y, sr),
+        #         get_wandb_image(pred, sr, "Pred"),
+        #         get_wandb_audio(pred, sr)
+        #     ] for y, pred, sr in zip(y_batch, pred_batch, y_sr)
+        # ])
+
+        # trainer.logger.experiment.log({
+        #     "image targets": y_imgs,
+        #     "audio targets": y_audio,
+        #     "image predictions": pred_imgs,
+        #     "audio predictions": pred_audio,
+        # }, commit=False)
