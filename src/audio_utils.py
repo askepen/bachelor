@@ -83,7 +83,7 @@ def plot_specgram(
         axes = [axes]
 
     spec_tensor = [
-        torch.log10(torch.linalg.norm(spec, dim=-1))
+        torch.log(torch.linalg.norm(spec, dim=-1))
         for spec in spec_tensor
     ]
 

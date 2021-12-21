@@ -118,6 +118,16 @@ class ViewAsReal(Module):
         return torch.view_as_real(x)
 
 
+class DB(Module):
+    """Decibels"""
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def forward(self, x):
+        return 20.0 * torch.log10(x)
+
+
 class OnlyReal(Module):
     """Drops the imaginary part of complex tensor."""
 

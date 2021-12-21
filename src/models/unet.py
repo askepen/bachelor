@@ -75,17 +75,19 @@ class LitUnet(pl.LightningModule):
             Conv2d(
                 in_channels,
                 out_channels,
-                kernel_size=self.kernel_size,
-                padding=self.kernel_size // 2,
+                kernel_size=((self.kernel_size*512)//in_channels, 1),
+                padding="same",
                 padding_mode="reflect",
+                dilation=1,
             ),
             LeakyReLU(),
             Conv2d(
                 out_channels,
                 out_channels,
-                kernel_size=self.kernel_size,
-                padding=self.kernel_size // 2,
+                kernel_size=((self.kernel_size*512)//in_channels, 1),
+                padding="same",
                 padding_mode="reflect",
+                dilation=1,
             ),
             LeakyReLU(),
         )
