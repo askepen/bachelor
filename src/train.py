@@ -33,7 +33,7 @@ def train_from_argparse():
 def train(args: Namespace):
     model = MODEL(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
-    logger.watch(model, log_freq=500)
+    # logger.watch(model, log_freq=500)
     cb_log_prediction = ImagePredictionLogger(
         args.log_n_samples, args.log_prediction_freq
     )

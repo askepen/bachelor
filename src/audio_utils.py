@@ -82,10 +82,13 @@ def plot_specgram(
         spec_tensor = [spec_tensor]
         axes = [axes]
 
-    spec_tensor = [
-        torch.log(torch.linalg.norm(spec, dim=-1))
-        for spec in spec_tensor
-    ]
+    def foo(x):
+        # x = torch.view_as_complex(x.contiguous())
+        x = torch.linalg.norm(x, dim=-1)
+        x = torch.log(x)
+        return x
+
+    spec_tensor = [foo(spec) for spec in spec_tensor]
 
     vmin = spec_tensor[0].min().item()
     vmax = spec_tensor[0].max().item()

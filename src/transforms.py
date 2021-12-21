@@ -118,14 +118,16 @@ class ViewAsReal(Module):
         return torch.view_as_real(x)
 
 
-class DB(Module):
+class NormailizeAndLog(Module):
     """Decibels"""
 
     def __init__(self) -> None:
         super().__init__()
 
     def forward(self, x):
-        return 20.0 * torch.log10(x)
+        x = torch.linalg.norm(x, dim=-1)
+        x = torch.log(x)
+        return x
 
 
 class OnlyReal(Module):

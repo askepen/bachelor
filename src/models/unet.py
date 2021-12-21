@@ -75,7 +75,7 @@ class LitUnet(pl.LightningModule):
             Conv2d(
                 in_channels,
                 out_channels,
-                kernel_size=((self.kernel_size*512)//in_channels, 1),
+                kernel_size=((self.kernel_size*512)//out_channels, 1),
                 padding="same",
                 padding_mode="reflect",
                 dilation=1,
@@ -84,7 +84,7 @@ class LitUnet(pl.LightningModule):
             Conv2d(
                 out_channels,
                 out_channels,
-                kernel_size=((self.kernel_size*512)//in_channels, 1),
+                kernel_size=((self.kernel_size*512)//out_channels, 1),
                 padding="same",
                 padding_mode="reflect",
                 dilation=1,
