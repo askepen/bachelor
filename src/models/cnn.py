@@ -85,19 +85,16 @@ class LitCNN(pl.LightningModule):
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
-            LeakyReLU(),
             Conv2d(
                 mid_channels, mid_channels, self.kernel_size,
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
-            LeakyReLU(),
             Conv2d(
                 mid_channels, mid_channels, self.kernel_size,
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
-            LeakyReLU(),
         )
         self.last = Conv2d(mid_channels, out_channels, 1)
 
