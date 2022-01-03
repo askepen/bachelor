@@ -37,7 +37,7 @@ def train(args: Namespace):
         args.log_n_samples, args.log_prediction_freq
     )
     trainer = pl.Trainer.from_argparse_args(
-        args, logger=logger, callbacks=cb_log_prediction
+        args, logger=logger,  # callbacks=cb_log_prediction
     )
     data_module = CompressedAudioDataModule.from_argparse_args(args)
 
