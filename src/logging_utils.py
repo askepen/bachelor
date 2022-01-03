@@ -10,6 +10,7 @@ from torchaudio import transforms as T
 def get_wandb_image(x, sr, name):
     sr = sr.item()
     n_fft = sr // (2 ** 5)
+    # n_fft = 2048
     fig = audio_utils.plot_specgram(
         x,
         sr,
@@ -27,7 +28,13 @@ def get_wandb_image(x, sr, name):
 def get_wandb_audio(x, sr):
     sr = sr.item()
     n_fft = sr // (2 ** 5)
+    # x = torchaudio.transforms.InverseMelScale(
+    #     x.shape[0],
+    #     sample_rate=sr,
+    #     n_mels=128,
+    # )(x)
     x = torch.view_as_complex(x.contiguous())
+    waveform = x
     waveform = torch.istft(x, n_fft).detach().cpu()
     return wandb.Audio(waveform.numpy(), sr)
 

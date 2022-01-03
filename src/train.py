@@ -2,13 +2,12 @@ import pytorch_lightning as pl
 from pytorch_lightning import callbacks
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.trainer.trainer import Trainer
-from models.unet import LitUnet
-from models.cnn import LitCNN
+from models import LitUnet, LitCNN, LitFullyConnected
 from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
 from logging_utils import ImagePredictionLogger
 
-MODEL = LitCNN
+MODEL = LitFullyConnected
 
 
 def train_from_dict(args_dict):

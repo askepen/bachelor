@@ -22,18 +22,19 @@ class STFT(Module):
             return x
 
 
-class MelScale(Module):
-    def __init__(self, n_mels=128) -> None:
-        self.n_mels = n_mels
+class MelSpectrogram(Module):
+    def __init__(self) -> None:
         super().__init__()
 
     def forward(self, x: torch.Tensor):
         x, sample_rate = x
-        x = torch.view_as_real(x)
-        n_stft = x.shape[-2]
-        print(x.shape)
-        x = T.MelScale(self.n_mels, sample_rate, n_stft=n_stft)(x)
-        print(x.shape)
+        # n_fft = sample_rate // (2 ** 6)
+        n_fft = 2048
+        x = torchaudio.transforms.MelSpectrogram(
+            sample_rate,
+            n_fft,
+            n_mels=128,
+        )(x)
         return x
 
 

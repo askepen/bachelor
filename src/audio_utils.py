@@ -8,6 +8,7 @@ import torch
 from IPython.display import display
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, SymLogNorm
+from torch.functional import norm
 import torchaudio
 
 
@@ -85,7 +86,7 @@ def plot_specgram(
     def foo(x):
         # x = torch.view_as_complex(x.contiguous())
         x = torch.linalg.norm(x, dim=-1)
-        x = torch.log(x)
+        x = torch.log(1+x)
         return x
 
     spec_tensor = [foo(spec) for spec in spec_tensor]
@@ -94,7 +95,7 @@ def plot_specgram(
     vmax = spec_tensor[0].max().item()
 
     for spec, ax in zip(spec_tensor, axes):
-        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,
+        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
                     cmap="gist_heat")
 
         # Set y-ticks to frequencies in Hz. Computed using the
