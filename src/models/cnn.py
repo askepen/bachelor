@@ -35,7 +35,7 @@ class LitCNN(pl.LightningModule):
         self.momentum = momentum
         self.kernel_size = kernel_size
 
-        self.loss_fn = loss.RMSLELoss()
+        self.loss_fn = loss.MSLELoss()
 
         self.first = Conv2d(in_channels, mid_channels, 1)
         self.layers = nn.Sequential(
