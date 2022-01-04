@@ -62,7 +62,7 @@ class CompressedAudioDataModule(LightningDataModule):
         """
         if stage == "fit" or stage is None:
             dataset_train = CompressedAudioDataset(
-                self.data_dir, train=True, transform=self.transform
+                self.data_dir, train=True, transform=self.transform, use_baked_data=True,
             )
             lengths = [
                 round(self.train_set_fraction * len(dataset_train)),
@@ -73,7 +73,7 @@ class CompressedAudioDataModule(LightningDataModule):
             )
         if stage == "test" or stage is None:
             self.dataset_test = CompressedAudioDataset(
-                self.data_dir, train=False, transform=self.transform
+                self.data_dir, train=False, transform=self.transform, device=self.device
             )
 
     def train_dataloader(self):

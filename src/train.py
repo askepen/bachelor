@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 from pytorch_lightning import callbacks
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.trainer.trainer import Trainer
+from pytorch_lightning import Trainer, seed_everything
 from models import LitUnet, LitCNN, LitFullyConnected
 from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
@@ -30,6 +30,7 @@ def train_from_argparse():
 
 
 def train(args: Namespace):
+    seed_everything(1337)
     model = MODEL(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     # logger.watch(model, log_freq=500)

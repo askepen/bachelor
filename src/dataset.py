@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import numpy as np
 
 import torch
+from torch._C import device
 import torchaudio
 from joblib import Parallel, delayed
 from torch.utils.data import Dataset
@@ -37,10 +38,13 @@ class CompressedAudioDataset(Dataset):
         force_download: bool = False,
         force_generate: bool = False,
         transform: torch.nn.Module = None,
+        use_baked_data: bool = False,
     ) -> None:
         super().__init__()
 
         self.transform = transform
+        self.device = device
+        self.use_baked_data = use_baked_data
 
         if train:
             self.data_url = CLEAN_TRAINSET_56SPK_URL
@@ -51,6 +55,10 @@ class CompressedAudioDataset(Dataset):
 
         self.data_path_wav = os.path.join(self.data_path, "wav")
         self.data_path_gsm = os.path.join(self.data_path, "gsm")
+        self.data_path_baked = os.path.join(self.data_path, "baked")
+
+        if not os.path.exists(self.data_path_baked):
+            os.mkdir(self.data_path_baked)
 
         self._get_wav_samples(force_download)
         self._get_gsm_samples(force_generate)
@@ -177,14 +185,24 @@ class CompressedAudioDataset(Dataset):
         A tuple of the compressed speech audio + sample rate and the
         corresponding target audio + sample rate
         """
-        gsm_path, wav_path = self._filename_pairs()[index]
+        bake_path_gsm = os.path.join(self.data_path_baked, f"{index}_gsm.pt")
+        bake_path_wav = os.path.join(self.data_path_baked, f"{index}_wav.pt")
 
-        gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
-        wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
+        if self.use_baked_data and os.path.exists(bake_path_gsm) and os.path.exists(bake_path_wav):
+            (gsm_tensor, gsm_sr) = torch.load(bake_path_gsm)
+            (wav_tensor, wav_sr) = torch.load(bake_path_wav)
+        else:
+            gsm_path, wav_path = self._filename_pairs()[index]
 
-        if self.transform is not None:
-            gsm_tensor = self.transform.forward((gsm_tensor, gsm_sr))
-            wav_tensor = self.transform.forward((wav_tensor, wav_sr))
+            gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
+            wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
+
+            if self.transform is not None:
+                gsm_tensor = self.transform((gsm_tensor, gsm_sr))
+                wav_tensor = self.transform((wav_tensor, wav_sr))
+
+            torch.save((gsm_tensor, gsm_sr), bake_path_gsm)
+            torch.save((wav_tensor, wav_sr), bake_path_wav)
 
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 
