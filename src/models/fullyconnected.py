@@ -20,7 +20,7 @@ class LitFullyConnected(pl.LightningModule):
         self.lr = lr
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
-        self.imag_layers = self.linear_layers(stft_height)
+        # self.imag_layers = self.linear_layers(stft_height)
         self.loss_fn = loss.MSLELoss()
         self.save_hyperparameters()
 
@@ -30,14 +30,14 @@ class LitFullyConnected(pl.LightningModule):
             nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
             nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
             nn.Linear(stft_height*8, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1)
+            nn.Linear(stft_height*1, stft_height*1), nn.ReLU(),
         )
 
     @staticmethod
@@ -58,18 +58,27 @@ class LitFullyConnected(pl.LightningModule):
         x = x.to(device=self.device)
         x = torch.view_as_complex(x)
 
-        x_real, x_imag = [
-            torch.cat([
-                layer(chunk.squeeze(-1)).unsqueeze(-1)
-                for chunk in torch.split(axes, 1, -1)
-            ], -1)
-            for axes, layer in [
-                (x.real, self.real_layers),
-                (x.imag, self.imag_layers),
-            ]
-        ]
+        phase = torch.angle(x)
+        x = torch.abs(x)
 
-        x = torch.complex(x_real, x_imag)
+        # x_real, x_imag = [
+        #     torch.cat([
+        #         layer(chunk.squeeze(-1)).unsqueeze(-1)
+        #         for chunk in torch.split(axes, 1, -1)
+        #     ], -1)
+        #     for axes, layer in [
+        #         (x.real, self.real_layers),
+        #         (x.imag, self.imag_layers),
+        #     ]
+        # ]
+        # x = torch.complex(x_real, x_imag)
+
+        x = torch.cat([
+            self.real_layers(chunk.squeeze(-1)).unsqueeze(-1)
+            for chunk in torch.split(x, 1, -1)
+        ], -1)
+
+        x = torch.polar(x, phase)
         x = torch.view_as_real(x)
         return x
 
