@@ -147,7 +147,7 @@ class LitCNN(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = self.loss_fn(pred, y)
+        loss = torch.log(self.loss_fn(pred, y))
         self.log(f"{step_name}_loss", loss)
         return loss
 
