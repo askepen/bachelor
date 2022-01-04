@@ -146,20 +146,17 @@ class LitCNN(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = torch.log(self.loss_fn(pred, y))
+        loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        """Returns loss from single batch"""
         return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx) -> None:
-        """Logs validation loss"""
         return self._step(batch, batch_idx, "valid")
 
     def test_step(self, batch, batch_idx):
-        """Logs test loss"""
         return self._step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
