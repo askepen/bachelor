@@ -32,7 +32,7 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = RMSLELoss()
+        self.loss_fn = nn.MSELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
@@ -90,7 +90,8 @@ class LitFullyConnected(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = self.loss_fn(pred, y)
+        loss = self.loss_fn(torch.log(pred + 1), torch.log(y + 1))
+        # loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
         return loss
 
