@@ -84,8 +84,9 @@ def plot_specgram(
         axes = [axes]
 
     def foo(x):
-        # x = torch.view_as_complex(x.contiguous())
-        x = torch.linalg.norm(x, dim=-1)
+        x = torch.view_as_complex(x.contiguous())
+        x = torch.abs(x)
+        # x = torch.linalg.norm(x, dim=-1)
         x = torch.log(1+x)
         return x
 

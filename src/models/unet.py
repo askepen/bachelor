@@ -98,9 +98,13 @@ class LitUnet(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(device=self.device)
-        # x = x.unsqueeze(0)
+
+        phase = torch.angle(torch.view_as_complex(x))
+        x = torch.abs(torch.view_as_complex(x))
+
+        x = x.unsqueeze(0)
         # Convert real/imag axes to channels
-        x = x.permute(0, 3, 1, 2)
+        # x = x.permute(0, 3, 1, 2)
 
         skip = []
 
@@ -121,8 +125,11 @@ class LitUnet(pl.LightningModule):
         x = self.crop_width_height(x, self.out_size)
 
         # Convert channels to real/imag axes
-        x = x.permute(0, 2, 3, 1)
-        # x = x.squeeze(0)
+        # x = x.permute(0, 2, 3, 1)
+        x = x.squeeze(0)
+
+        x = torch.polar(x, phase)
+        x = torch.view_as_real(x)
 
         return x
 
