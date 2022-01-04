@@ -10,8 +10,8 @@ class RMSLELoss(nn.Module):
         super().__init__()
         self.mse = nn.MSELoss()
 
-    def forward(self, pred, y):
-        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(y + 1)))
+    def forward(self, pred, actual):
+        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
 
 
 class LitFullyConnected(pl.LightningModule):
