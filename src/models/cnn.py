@@ -35,7 +35,7 @@ class LitCNN(pl.LightningModule):
         self.momentum = momentum
         self.kernel_size = kernel_size
 
-        self.loss_fn = loss.MSLELoss()
+        self.loss_fn = nn.MSELoss()
 
         self.first = Conv2d(in_channels, mid_channels, 1)
         self.layers = nn.Sequential(
@@ -139,14 +139,13 @@ class LitCNN(pl.LightningModule):
         x = x.squeeze(1)
         x = torch.polar(x, phase)
         x = torch.view_as_real(x)
+        x = torch.log(1+x)
 
         return x
 
     def _step(self, batch, batch_idx, step_name):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
-        # x = torch.linalg.norm(x, dim=-1)
-        # y = torch.linalg.norm(y, dim=-1)
         pred = self(x)
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
