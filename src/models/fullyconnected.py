@@ -5,13 +5,16 @@ from torch import nn
 from torchvision.transforms import CenterCrop
 
 
-class RMSLELoss(nn.Module):
+class MSLELoss(nn.Module):
     def __init__(self):
         super().__init__()
         self.mse = nn.MSELoss()
 
     def forward(self, pred, actual):
-        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
+        return self.mse(
+            torch.log(1 + pred - pred.min()),
+            torch.log(1 + actual - actual.min())
+        )
 
 
 class LitFullyConnected(pl.LightningModule):
@@ -32,7 +35,7 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = nn.MSELoss()
+        self.loss_fn = MSLELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
@@ -90,8 +93,8 @@ class LitFullyConnected(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = self.loss_fn(torch.log(pred + 1), torch.log(y + 1))
-        # loss = self.loss_fn(pred, y)
+        # loss = self.loss_fn(torch.log(pred-pred.min() + 1), torch.log(y-y.min() + 1))
+        loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
         return loss
 
