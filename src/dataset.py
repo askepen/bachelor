@@ -204,9 +204,6 @@ class CompressedAudioDataset(Dataset):
             torch.save((gsm_tensor, gsm_sr), bake_path_gsm)
             torch.save((wav_tensor, wav_sr), bake_path_wav)
 
-            os.remove(gsm_path)
-            os.remove(wav_path)
-
         return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 
     def numpy(self) -> np.ndarray:
