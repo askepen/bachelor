@@ -10,6 +10,7 @@ from torch import nn
 from torch.nn import Conv2d, LeakyReLU, MaxPool2d
 from torch.nn.modules.upsampling import UpsamplingBilinear2d
 from torchvision.transforms import CenterCrop
+import loss
 
 
 class LitCNN(pl.LightningModule):
@@ -34,7 +35,7 @@ class LitCNN(pl.LightningModule):
         self.momentum = momentum
         self.kernel_size = kernel_size
 
-        self.loss_fn = nn.MSELoss(reduction="sum")
+        self.loss_fn = loss.RMSLELoss()
 
         self.first = Conv2d(in_channels, mid_channels, 1)
         self.layers = nn.Sequential(
