@@ -21,22 +21,26 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         # self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = loss.MSLELoss()
+        self.loss_fn = loss.RMSLELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
         return nn.Sequential(
             nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
             nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*8), nn.LeakyReLU(),
-            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            # nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
             nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
             nn.Linear(stft_height*8, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
             nn.Linear(stft_height*1, stft_height*1), nn.ReLU(),
         )
 
