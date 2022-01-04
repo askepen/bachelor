@@ -127,7 +127,7 @@ class LitUnet(pl.LightningModule):
 
         # Convert channels to real/imag axes
         # x = x.permute(0, 2, 3, 1)
-        # x = x.squeeze(-1)
+        x = x.squeeze(1)
 
         x = torch.polar(x, phase)
         x = torch.view_as_real(x)
