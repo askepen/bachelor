@@ -28,14 +28,18 @@ class LitFullyConnected(pl.LightningModule):
 
     def linear_layers(self, stft_height):
         return nn.Sequential(
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
-            nn.Linear(stft_height, stft_height), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
+            nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
+            nn.Linear(stft_height*4, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
+            nn.Linear(stft_height*8, stft_height*4), nn.LeakyReLU(),
+            nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
+            nn.Linear(stft_height*2, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
         )
 
     @staticmethod
