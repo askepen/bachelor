@@ -23,6 +23,8 @@ class LitUnet(pl.LightningModule):
         kernel_size,
         in_channels,
         out_channels,
+        b1,
+        b2,
         **kwargs,
     ):
         super().__init__()
@@ -32,6 +34,7 @@ class LitUnet(pl.LightningModule):
         self.momentum = momentum
         self.num_blocks = num_blocks
         self.kernel_size = kernel_size
+        self.betas = (b1, b2)
 
         self.loss_fn = nn.MSELoss()
         # self.loss_fn = loss.RMSLELoss()
@@ -65,6 +68,8 @@ class LitUnet(pl.LightningModule):
         )
         parser.add_argument("--num_blocks", type=int, default=3)
         parser.add_argument("--optim", type=str, default="adam")
+        parser.add_argument("--b1", type=float, default=0.9)
+        parser.add_argument("--b2", type=float, default=0.999)
         parser.add_argument("--kernel_size", type=int, default=3)
         parser.add_argument("--in_channels", type=int, default=2)
         parser.add_argument("--out_channels", type=int, default=2)
@@ -157,7 +162,7 @@ class LitUnet(pl.LightningModule):
 
     def configure_optimizers(self):
         if self.optim == "adam":
-            return torch.optim.Adam(self.parameters(), lr=self.lr)
+            return torch.optim.Adam(self.parameters(), lr=self.lr, betas=self.betas)
         elif self.optim == "sgd":
             return torch.optim.SGD(self.parameters(), lr=self.lr, momentum=self.momentum)
         else:
