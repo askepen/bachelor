@@ -62,7 +62,7 @@ class CompressedAudioDataModule(LightningDataModule):
         """
         if stage == "fit" or stage is None:
             dataset_train = CompressedAudioDataset(
-                self.data_dir, train=True, transform=self.transform, use_baked_data=True,
+                self.data_dir, train=True, transform=self.transform, use_baked_data=False,
             )
             lengths = [
                 round(self.train_set_fraction * len(dataset_train)),
