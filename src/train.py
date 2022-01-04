@@ -7,7 +7,7 @@ from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
 from logging_utils import ImagePredictionLogger
 
-MODEL = LitFullyConnected
+MODEL = LitCNN
 
 
 def train_from_dict(args_dict):
@@ -22,6 +22,7 @@ def train_from_argparse():
     parser.add_argument("--wandb", type=bool, default=False)
     parser.add_argument("--log_n_samples", type=int, default=4)
     parser.add_argument("--log_prediction_freq", type=int, default=4)
+    parser.add_argument("--model", type=str, default="LitUnet")
     parser = Trainer.add_argparse_args(parser)
     parser = CompressedAudioDataModule.add_argparse_args(parser)
     parser = MODEL.add_model_specific_args(parser)
