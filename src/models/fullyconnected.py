@@ -2,31 +2,17 @@ from typing_extensions import OrderedDict
 import pytorch_lightning as pl
 import torch
 from torch import nn
+import loss
 from torchvision.transforms import CenterCrop
-
-
-class MSLELoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.mse = nn.MSELoss()
-
-    def forward(self, pred, actual):
-        return self.mse(
-            torch.log(1 + pred - pred.min()),
-            torch.log(1 + actual - actual.min())
-        )
 
 
 class LitFullyConnected(pl.LightningModule):
     def __init__(
         self,
-        stft_width,
         stft_height,
         lr,
         momentum,
-        num_blocks,
         optim,
-        kernel_size,
         **kwargs,
     ):
         super().__init__()
@@ -35,7 +21,7 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = MSLELoss()
+        self.loss_fn = loss.MSLELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
@@ -62,9 +48,7 @@ class LitFullyConnected(pl.LightningModule):
             "--momentum", type=float, default=0.0,
             help="Only for SGD optimizer"
         )
-        parser.add_argument("--num_blocks", type=int, default=3)
         parser.add_argument("--optim", type=str, default="adam")
-        parser.add_argument("--kernel_size", type=int, default=3)
         return parent_parser
 
     def crop_width_height(self, x, shape_to_match):
@@ -93,7 +77,6 @@ class LitFullyConnected(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        # loss = self.loss_fn(torch.log(pred-pred.min() + 1), torch.log(y-y.min() + 1))
         loss = self.loss_fn(pred, y)
         self.log(f"{step_name}_loss", loss)
         return loss

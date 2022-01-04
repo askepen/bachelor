@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
-
+import loss
 # from complexPyTorch.complexLayers import (
 #     #     ComplexConv2d as Conv2d,
 #     #     ComplexReLU as ReLU,
@@ -33,7 +33,7 @@ class LitUnet(pl.LightningModule):
         self.num_blocks = num_blocks
         self.kernel_size = kernel_size
 
-        self.loss_fn = nn.MSELoss()
+        self.loss_fn = loss.MSLELoss()
         self.down = MaxPool2d(2, ceil_mode=True)
         self.down_blocks = torch.nn.ModuleList([
             self.block(in_channels, 64, 0),
@@ -98,9 +98,9 @@ class LitUnet(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(device=self.device)
-        x = x.unsqueeze(0)
+        # x = x.unsqueeze(0)
         # Convert real/imag axes to channels
-        # x = x.permute(0, 3, 1, 2)
+        x = x.permute(0, 3, 1, 2)
 
         skip = []
 
@@ -121,8 +121,8 @@ class LitUnet(pl.LightningModule):
         x = self.crop_width_height(x, self.out_size)
 
         # Convert channels to real/imag axes
-        # x = x.permute(0, 2, 3, 1)
-        x = x.squeeze(0)
+        x = x.permute(0, 2, 3, 1)
+        # x = x.squeeze(0)
 
         return x
 
