@@ -5,6 +5,15 @@ from torch import nn
 from torchvision.transforms import CenterCrop
 
 
+class MSLELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, pred, y):
+        return self.mse(torch.log(pred + 1), torch.log(y + 1))
+
+
 class LitFullyConnected(pl.LightningModule):
     def __init__(
         self,
@@ -23,7 +32,7 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = nn.SmoothL1Loss()
+        self.loss_fn = MSLELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
