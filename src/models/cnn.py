@@ -139,7 +139,7 @@ class LitCNN(pl.LightningModule):
         x = x.squeeze(1)
         x = torch.polar(x, phase)
         x = torch.view_as_real(x)
-        x = torch.log(1+x)
+        x = torch.log(1+torch.relu(x))
 
         return x
 
