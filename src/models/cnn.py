@@ -121,14 +121,23 @@ class LitCNN(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(device=self.device)
-        x = x.permute(0, 3, 1, 2)
+
+        x = torch.view_as_complex(x)
+        phase, x = torch.angle(x), torch.abs(x)
+        x = x.unsqueeze(1)
+
+        # x = x.permute(0, 3, 1, 2)
+
         x = self.first(x)
-        # for layer in self.layers:
-        #     x = layer(x)
         x = self.layers(x)
         x = self.last(x)
         x = self.crop_width_height(x, self.out_size)
-        x = x.permute(0, 2, 3, 1)
+
+        # x = x.permute(0, 2, 3, 1)
+
+        x = x.squeeze(1)
+        x = torch.polar(x, phase)
+        x = torch.view_as_real(x)
 
         return x
 
