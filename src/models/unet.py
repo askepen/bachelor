@@ -71,7 +71,7 @@ class LitUnet(pl.LightningModule):
 
     def block(self, in_channels, out_channels, depth=None, with_concat=False):
         in_channels = in_channels + out_channels if with_concat else in_channels
-        kernel_height = 9 if depth is None else [65, 33, 17, 9][depth]
+        kernel_height = [65, 33, 17, 9][depth or 3]
         return nn.Sequential(
             Conv2d(
                 in_channels,
@@ -101,8 +101,9 @@ class LitUnet(pl.LightningModule):
 
         phase = torch.angle(torch.view_as_complex(x))
         x = torch.abs(torch.view_as_complex(x))
+        # x = torch.cat([magnitude, phase], dim=1)
 
-        x = x.unsqueeze(0)
+        x = x.unsqueeze(1)
         # Convert real/imag axes to channels
         # x = x.permute(0, 3, 1, 2)
 
@@ -126,7 +127,7 @@ class LitUnet(pl.LightningModule):
 
         # Convert channels to real/imag axes
         # x = x.permute(0, 2, 3, 1)
-        x = x.squeeze(0)
+        # x = x.squeeze(-1)
 
         x = torch.polar(x, phase)
         x = torch.view_as_real(x)
