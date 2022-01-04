@@ -39,7 +39,7 @@ class LitFullyConnected(pl.LightningModule):
             nn.Linear(stft_height*8, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
+            nn.Linear(stft_height*1, stft_height*1)
         )
 
     @staticmethod
