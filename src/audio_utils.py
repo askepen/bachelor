@@ -95,7 +95,8 @@ def plot_specgram(
     vmax = spec_tensor[0].max().item()
 
     for spec, ax in zip(spec_tensor, axes):
-        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax, norm=LogNorm(),
+        spec = spec.squeeze()
+        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
                     cmap="gist_heat")
 
         # Set y-ticks to frequencies in Hz. Computed using the

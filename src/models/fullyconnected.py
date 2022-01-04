@@ -23,7 +23,7 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.real_layers = self.linear_layers(stft_height)
         self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = nn.MSELoss()
+        self.loss_fn = nn.SmoothL1Loss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
