@@ -191,16 +191,18 @@ class CompressedAudioDataset(Dataset):
         if self.use_baked_data and os.path.exists(bake_path_gsm) and os.path.exists(bake_path_wav):
             (gsm_tensor, gsm_sr) = torch.load(bake_path_gsm)
             (wav_tensor, wav_sr) = torch.load(bake_path_wav)
-        else:
-            gsm_path, wav_path = self._filename_pairs()[index]
+            return (gsm_tensor, gsm_sr), (wav_tensor, wav_sr)
 
-            gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
-            wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
+        gsm_path, wav_path = self._filename_pairs()[index]
 
-            if self.transform is not None:
-                gsm_tensor = self.transform((gsm_tensor, gsm_sr))
-                wav_tensor = self.transform((wav_tensor, wav_sr))
+        gsm_tensor, gsm_sr = torchaudio.load(gsm_path, format="gsm")
+        wav_tensor, wav_sr = torchaudio.load(wav_path, format="wav")
 
+        if self.transform is not None:
+            gsm_tensor = self.transform((gsm_tensor, gsm_sr))
+            wav_tensor = self.transform((wav_tensor, wav_sr))
+
+        if self.use_baked_data:
             torch.save((gsm_tensor, gsm_sr), bake_path_gsm)
             torch.save((wav_tensor, wav_sr), bake_path_wav)
 
