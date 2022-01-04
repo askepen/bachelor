@@ -30,7 +30,6 @@ def train_from_argparse():
 
 
 def train(args: Namespace):
-    seed_everything(1337)
     model = MODEL(**vars(args))
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     # logger.watch(model, log_freq=500)
