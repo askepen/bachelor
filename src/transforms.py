@@ -92,12 +92,20 @@ class RepeatToSize(Module):
     def forward(self, x):
         x = x.squeeze()
 
-        ratio = ceil(self.shape[0] / x.shape[0])
-        x = torch.cat([x*exp(-i) for i in range(ratio)])
+        phase, magnitude = torch.angle(x), torch.abs(x)
 
-        y_diff = self.shape[-1] - x.shape[-1]
-        x_diff = self.shape[-2] - x.shape[-2]
-        x = F.pad(x, pad=[0, y_diff, 0, x_diff], value=0.0)
+        ratio = ceil(self.shape[0] / x.shape[0])
+        magnitude = torch.cat([magnitude*exp(-i) for i in range(ratio)])
+
+        y_diff = self.shape[-1] - magnitude.shape[-1]
+        x_diff = self.shape[-2] - magnitude.shape[-2]
+        magnitude = F.pad(magnitude, pad=[0, y_diff, 0, x_diff], value=0.0)
+
+        y_diff = self.shape[-1] - phase.shape[-1]
+        x_diff = self.shape[-2] - phase.shape[-2]
+        phase = F.pad(phase, pad=[0, y_diff, 0, x_diff], value=0.0)
+
+        x = torch.polar(magnitude, phase)
 
         return x
 

@@ -7,7 +7,7 @@ from data_module import CompressedAudioDataModule
 from argparse import ArgumentParser, Namespace
 from logging_utils import ImagePredictionLogger
 
-MODEL = LitUnet
+MODEL = LitCNN
 
 
 def train_from_dict(args_dict):
