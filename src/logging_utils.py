@@ -7,10 +7,9 @@ import matplotlib.pyplot as plt
 from torchaudio import transforms as T
 
 
-def get_wandb_image(x, sr, name):
+def get_wandb_image(x, sr, name, n_fft=None):
     sr = sr.item()
-    n_fft = sr // (2 ** 5)
-    # n_fft = 2048
+    n_fft = n_fft or sr // (2 ** 5)
     fig = audio_utils.plot_specgram(
         x,
         sr,
@@ -25,14 +24,9 @@ def get_wandb_image(x, sr, name):
     return img
 
 
-def get_wandb_audio(x, sr):
+def get_wandb_audio(x, sr, n_fft=None):
     sr = sr.item()
-    n_fft = sr // (2 ** 5)
-    # x = torchaudio.transforms.InverseMelScale(
-    #     x.shape[0],
-    #     sample_rate=sr,
-    #     n_mels=128,
-    # )(x)
+    n_fft = n_fft or sr // (2 ** 5)
     x = torch.view_as_complex(x.contiguous())
     waveform = x
     waveform = torch.istft(x, n_fft).detach().cpu()
@@ -40,10 +34,11 @@ def get_wandb_audio(x, sr):
 
 
 class ImagePredictionLogger(Callback):
-    def __init__(self, n_samples, log_every_n_steps=10):
+    def __init__(self, n_samples, log_every_n_steps=10, n_fft=None):
         super().__init__()
         self.n_samples = n_samples
         self.log_every_n_steps = log_every_n_steps
+        self.n_fft = n_fft
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         if batch_idx % self.log_every_n_steps != 0:
@@ -62,8 +57,8 @@ class ImagePredictionLogger(Callback):
             [
                 get_wandb_image(x, x_sr, "Input"),
                 get_wandb_image((y, pred), y_sr, "Actual / Prediction"),
-                get_wandb_audio(y, y_sr),
-                get_wandb_audio(pred, y_sr),
+                get_wandb_audio(y, y_sr, n_fft),
+                get_wandb_audio(pred, y_sr, n_fft),
             ] for x, y, pred, x_sr, y_sr in zip(x_batch, y_batch, pred_batch, x_sr, y_sr)
         ])
 

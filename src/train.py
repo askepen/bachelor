@@ -35,7 +35,7 @@ def train(args: Namespace):
     logger = WandbLogger(project="Bachelor") if args.wandb else None
     # logger.watch(model, log_freq=500)
     cb_log_prediction = ImagePredictionLogger(
-        args.log_n_samples, args.log_prediction_freq
+        args.log_n_samples, args.log_prediction_freq, args.n_fft
     )
     trainer = pl.Trainer.from_argparse_args(
         args, logger=logger,  callbacks=cb_log_prediction
