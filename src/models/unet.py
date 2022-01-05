@@ -75,8 +75,7 @@ class LitUnet(pl.LightningModule):
         return parent_parser
 
     def block(self, in_channels, out_channels, kernel_height, direction, concat=False):
-        out_channels = [128, 256, 512, 1024, 128, 512, 512, 512]
-        in_channels = in_channels + out_channels if concat else in_channels
+        in_channels = 2*in_channels if concat else in_channels
         conv = nn.Conv2d(
             in_channels,
             out_channels,
