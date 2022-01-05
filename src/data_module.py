@@ -32,7 +32,8 @@ class CompressedAudioDataModule(LightningDataModule):
             transforms.Trim(left=trim_left),
             transforms.STFT(n_fft),
             # transforms.MelSpectrogram(),
-            transforms.PadToSize([stft_height, stft_width]),
+            # transforms.PadToSize([stft_height, stft_width]),
+            transforms.RepeatToSize([stft_height, stft_width]),
             transforms.ViewAsReal(),
         )
 

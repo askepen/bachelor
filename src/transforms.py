@@ -83,6 +83,26 @@ class PadToSize(Module):
             return x
 
 
+class RepeatToSize(Module):
+    def __init__(self, shape, has_sample_rate=False) -> None:
+        self.shape = shape
+        super().__init__()
+
+    def forward(self, x):
+        x = x.squeeze()
+
+        def ceil_div(a, b): return -1 * (-a // b)
+        ratio = ceil_div(self.shape[0], x.shape[0])
+
+        x = torch.cat([x for _ in range(ratio)])
+
+        y_diff = self.shape[-1] - x.shape[-1]
+        x_diff = self.shape[-2] - x.shape[-2]
+        x = F.pad(x, pad=[0, y_diff, 0, x_diff], value=0.0)
+
+        return x
+
+
 class RandomSubsample(Module):
     def __init__(self) -> None:
         super().__init__()
