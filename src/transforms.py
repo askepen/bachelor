@@ -4,6 +4,7 @@ from torch.nn import Module
 from matplotlib import pyplot as plt
 from torchaudio import transforms as T
 import torchaudio
+from math import exp, ceil
 
 
 class STFT(Module):
@@ -91,10 +92,8 @@ class RepeatToSize(Module):
     def forward(self, x):
         x = x.squeeze()
 
-        def ceil_div(a, b): return -1 * (-a // b)
-        ratio = ceil_div(self.shape[0], x.shape[0])
-
-        x = torch.cat([x for _ in range(ratio)])
+        ratio = ceil(self.shape[0] / x.shape[0])
+        x = torch.cat([x*exp(-i) for i in range(ratio)])
 
         y_diff = self.shape[-1] - x.shape[-1]
         x_diff = self.shape[-2] - x.shape[-2]
