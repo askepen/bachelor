@@ -37,7 +37,7 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
 
         self.loss_fn = nn.MSELoss()
-        # self.loss_fn = loss.RMSLELoss()
+        # self.loss_fn = loss.MSLELoss()
         self.down = MaxPool2d(2, ceil_mode=True)
 
         self.down_blocks = torch.nn.ModuleList([
@@ -146,7 +146,8 @@ class LitUnet(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = torch.sqrt(self.loss_fn(pred, y))
+        loss = self.loss_fn(pred, y)
+        # loss = torch.sqrt(loss)
         self.log(f"{step_name}_loss", loss)
         return loss
 
