@@ -39,22 +39,23 @@ class LitUnet(pl.LightningModule):
         # self.loss_fn = nn.MSELoss()
         self.loss_fn = loss.RMSLELoss()
         self.down = MaxPool2d(2, ceil_mode=True)
+
         self.down_blocks = torch.nn.ModuleList([
-            self.block(in_channels, 64, 0),
-            self.block(64, 128, 1),
-            self.block(128, 256, 2),
-            self.block(256, 512, 3),
+            self.block(in_channels, 128, 0),
+            self.block(128, 384, 1),
+            self.block(384, 512, 2),
+            self.block(512, 512, 3),
         ])
-        self.bottom = self.block(512, 1024)
+        self.bottom = self.block(512, 512)
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
         self.up_blocks = torch.nn.ModuleList([
-            self.block(1024, 512, with_concat=True),
-            self.block(512, 256, with_concat=True),
-            self.block(256, 128, with_concat=True),
-            self.block(128, 64, with_concat=True),
+            self.block(512, 512, None, 512),
+            self.block(512, 512, None, 512),
+            self.block(512, 512, None, 384),
+            self.block(512, 512, None, 128),
         ])
         self.out = Conv2d(
-            in_channels=64, out_channels=out_channels, kernel_size=1
+            in_channels=512, out_channels=out_channels, kernel_size=1
         )
         self.save_hyperparameters()
 
@@ -75,8 +76,9 @@ class LitUnet(pl.LightningModule):
         parser.add_argument("--out_channels", type=int, default=2)
         return parent_parser
 
-    def block(self, in_channels, out_channels, depth=None, with_concat=False):
-        in_channels = in_channels + out_channels if with_concat else in_channels
+    def block(self, in_channels, out_channels, depth=None, concat_channels=None):
+        # in_channels = in_channels + out_channels if with_concat else in_channels
+        in_channels = in_channels + (concat_channels or 0)
         kernel_height = [65, 33, 17, 9][depth or 3]
         return nn.Sequential(
             Conv2d(
@@ -88,15 +90,15 @@ class LitUnet(pl.LightningModule):
                 dilation=1,
             ),
             LeakyReLU(0.2),
-            Conv2d(
-                out_channels,
-                out_channels,
-                kernel_size=(kernel_height, 1),
-                padding="same",
-                padding_mode="reflect",
-                dilation=1,
-            ),
-            LeakyReLU(0.2),
+            # Conv2d(
+            #     out_channels,
+            #     out_channels,
+            #     kernel_size=(kernel_height, 1),
+            #     padding="same",
+            #     padding_mode="reflect",
+            #     dilation=1,
+            # ),
+            # LeakyReLU(0.2),
         )
 
     def crop_width_height(self, x, shape_to_match):
