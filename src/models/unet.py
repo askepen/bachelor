@@ -41,20 +41,20 @@ class LitUnet(pl.LightningModule):
         self.down = MaxPool2d(2, ceil_mode=True)
 
         self.down_blocks = torch.nn.ModuleList([
-            self.block(in_channels, 128, 65, "down"),
-            self.block(128, 256, 33, "down"),
-            self.block(256, 512, 17, "down"),
-            self.block(512, 512, 9, "down"),
+            self.block(in_channels, 64, 65, "down"),
+            self.block(64, 128, 33, "down"),
+            self.block(128, 256, 17, "down"),
+            self.block(256, 512, 9, "down"),
         ])
         self.bottom = self.block(512, 512, 3, "bottom")
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
         self.up_blocks = torch.nn.ModuleList([
-            self.block(512, 512, 3, "up", concat=True),
             self.block(512, 256, 3, "up", concat=True),
             self.block(256, 128, 3, "up", concat=True),
             self.block(128, 64, 3, "up", concat=True),
+            self.block(64, 64, 3, "up", concat=True),
         ])
-        self.out = Conv2d(64, out_channels, kernel_size=9)
+        self.out = Conv2d(64, out_channels, kernel_size=1)
         self.save_hyperparameters()
 
     @staticmethod
