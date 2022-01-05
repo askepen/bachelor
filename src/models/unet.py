@@ -41,23 +41,20 @@ class LitUnet(pl.LightningModule):
         self.down = MaxPool2d(2, ceil_mode=True)
 
         self.down_blocks = torch.nn.ModuleList([
-            self.block(in_channels, 0, "down"),
-            self.block(128, 1, "down"),
-            self.block(384, 2, "down"),
-            self.block(512, 3, "down"),
+            self.block(in_channels, 128, 65, "down"),
+            self.block(128, 256, 33, "down"),
+            self.block(256, 512, 17, "down"),
+            self.block(512, 1024, 9, "down"),
         ])
-        self.bottom = self.block(512, 4, "bottom")
+        self.bottom = self.block(1024, 1024, 5, "bottom")
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
         self.up_blocks = torch.nn.ModuleList([
-            self.block(512, 4, "up"),
-            self.block(512, 5, "up"),
-            self.block(512, 6, "up"),
-            self.block(512, 7, "up"),
+            self.block(1024, 512, 5, "up", concat=True),
+            self.block(512, 256, 5, "up", concat=True),
+            self.block(256, 128, 3, "up", concat=True),
+            self.block(128, 64, 3, "up", concat=True),
         ])
-        self.out = nn.Sequential(
-            Conv2d(in_channels=512, out_channels=out_channels, kernel_size=9),
-            nn.Dropout2d(),
-        )
+        self.out = Conv2d(64, out_channels, kernel_size=9)
         self.save_hyperparameters()
 
     @staticmethod
@@ -77,24 +74,23 @@ class LitUnet(pl.LightningModule):
         parser.add_argument("--out_channels", type=int, default=2)
         return parent_parser
 
-    def block(self, in_channels, depth, direction):
-        kernel_heights = [65, 33, 17,  9,  9,  9,  9,  9]
-        out_channels = [128, 384, 512, 512, 512, 512, 512, 512]
+    def block(self, in_channels, out_channels, kernel_height, direction, concat=False):
+        out_channels = [128, 256, 512, 1024, 128, 512, 512, 512]
+        in_channels = in_channels + out_channels if concat else in_channels
+        conv = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size=(kernel_height, 1),
+            padding="same",
+            padding_mode="zeros",
+            dilation=2,
+        )
         if direction == "down":
             post = nn.LeakyReLU(0.2)
         elif direction == "bottom":
             post = nn.Sequential(nn.Dropout2d(), nn.LeakyReLU(0.2))
         else:
-            in_channels = in_channels + out_channels[7-depth]
             post = nn.Sequential(nn.Dropout2d(), nn.ReLU())
-        conv = nn.Conv2d(
-            in_channels,
-            out_channels[depth],
-            kernel_size=(kernel_heights[depth], 1),
-            padding="same",
-            padding_mode="zeros",
-            dilation=2,
-        )
         return nn.Sequential(conv, post)
 
     def crop_width_height(self, x, shape_to_match):
