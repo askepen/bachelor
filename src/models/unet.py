@@ -36,8 +36,8 @@ class LitUnet(pl.LightningModule):
         self.kernel_size = kernel_size
         self.betas = (b1, b2)
 
-        self.loss_fn = nn.MSELoss()
-        # self.loss_fn = loss.MSLELoss()
+        # self.loss_fn = nn.MSELoss()
+        self.loss_fn = loss.MSLELoss()
         self.down = MaxPool2d(2, ceil_mode=True)
 
         self.down_blocks = torch.nn.ModuleList([
