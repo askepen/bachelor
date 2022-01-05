@@ -36,24 +36,23 @@ class LitUnet(pl.LightningModule):
         self.kernel_size = kernel_size
         self.betas = (b1, b2)
 
-        # self.loss_fn = nn.MSELoss()
-        self.loss_fn = loss.MSLELoss()
+        self.loss_fn = nn.MSELoss()
+        # self.loss_fn = loss.MSLELoss()
         self.down = MaxPool2d(2, ceil_mode=True)
-
-        self.down_blocks = torch.nn.ModuleList([
-            self.block(in_channels, 64, 65, "down"),
-            self.block(64, 128, 33, "down"),
-            self.block(128, 256, 17, "down"),
-            self.block(256, 512, 9, "down"),
+        self.down_blocks = nn.ModuleList([
+            self.block(in_channels, 64, 33, "down"),
+            self.block(64, 128, 17, "down"),
+            self.block(128, 256, 9, "down"),
+            self.block(256, 512, 5, "down"),
+        ])
+        self.up_blocks = nn.ModuleList([
+            self.block(512, 256, 3, "up"),
+            self.block(256, 128, 3, "up"),
+            self.block(128, 64, 3, "up"),
+            self.block(64, 64, 3, "up"),
         ])
         self.bottom = self.block(512, 512, 3, "bottom")
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
-        self.up_blocks = torch.nn.ModuleList([
-            self.block(512, 256, 3, "up", concat=True),
-            self.block(256, 128, 3, "up", concat=True),
-            self.block(128, 64, 3, "up", concat=True),
-            self.block(64, 64, 3, "up", concat=True),
-        ])
         self.out = Conv2d(64, out_channels, kernel_size=1)
         self.save_hyperparameters()
 
@@ -74,15 +73,14 @@ class LitUnet(pl.LightningModule):
         parser.add_argument("--out_channels", type=int, default=2)
         return parent_parser
 
-    def block(self, in_channels, out_channels, kernel_height, direction, concat=False):
-        in_channels = 2*in_channels if concat else in_channels
+    def block(self, in_channels, out_channels, kernel_height, direction):
+        in_channels = 2*in_channels if direction == "up" else in_channels
         conv = nn.Conv2d(
             in_channels,
             out_channels,
             kernel_size=(kernel_height, 1),
             padding="same",
-            padding_mode="zeros",
-            dilation=2,
+            dilation=2 if direction == "down" else 1,
         )
         if direction == "down":
             post = nn.LeakyReLU(0.2)
@@ -106,22 +104,30 @@ class LitUnet(pl.LightningModule):
         # Convert real/imag axes to channels
         # x = x.permute(0, 3, 1, 2)
 
+        x = self.crop_width_height(x, [self.out_size[0]-1, self.out_size[1]])
+        x_subs = torch.split(x, round(x.shape[-2]/4), dim=2)
+        x = torch.cat(x_subs, dim=1)
+
         skip = []
 
         for block in self.down_blocks:
             x = block(x)
             skip.append(x)
             x = self.down(x)
-
         x = self.bottom(x)
 
         for skip_connection, block in zip(skip[::-1], self.up_blocks):
             x = self.up(x)
-            skip_connection = self.crop_width_height(skip_connection, x.shape)
+            skip_connection = self.crop_width_height(
+                skip_connection, x.shape)
             x = torch.cat((x, skip_connection), dim=1)
             x = block(x)
 
         x = self.out(x)
+
+        x_subs = torch.split(x, round(x.shape[1]/4), dim=1)
+        x = torch.cat(x_subs, dim=2)
+
         x = self.crop_width_height(x, self.out_size)
 
         # Convert channels to real/imag axes

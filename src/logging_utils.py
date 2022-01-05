@@ -28,7 +28,7 @@ def get_wandb_audio(x, sr, n_fft=None):
     sr = sr.item()
     n_fft = n_fft or sr // (2 ** 5)
     x = torch.view_as_complex(x.contiguous())
-    waveform = x
+
     waveform = torch.istft(x, n_fft).detach().cpu()
     return wandb.Audio(waveform.numpy(), sr)
 
