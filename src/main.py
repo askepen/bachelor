@@ -3,6 +3,7 @@ import torch
 import audio_utils
 import train
 from dataset import CompressedAudioDataset
+import baseline
 
 
 def main():
@@ -20,6 +21,10 @@ def dataset_examples():
     gsm, wav = dataset[123]
     plot_spec_and_play(gsm[0], gsm[1])
     plot_spec_and_play(wav[0], wav[1])
+
+    model = baseline.BaselineAudioRegressor()
+    pred = model.predict(gsm[0])
+    plot_spec_and_play(pred, wav[1])
 
 
 def plot_spec_and_play(waveform, sample_rate, title="Spectrogram"):

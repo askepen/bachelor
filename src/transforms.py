@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from torchaudio import transforms as T
 import torchaudio
 from math import exp, ceil
+from baseline import BaselineAudioRegressor
 
 
 class STFT(Module):
@@ -21,6 +22,17 @@ class STFT(Module):
             return x, sample_rate
         else:
             return x
+
+
+class BSpline(Module):
+    def __init__(self) -> None:
+        self.bspline = BaselineAudioRegressor()
+        super().__init__()
+
+    def forward(self, x: torch.Tensor):
+        waveform, sr = x
+        waveform = self.bspline.predict(waveform)
+        return waveform, sr
 
 
 class MelSpectrogram(Module):
