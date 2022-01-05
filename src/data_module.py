@@ -30,7 +30,7 @@ class CompressedAudioDataModule(LightningDataModule):
         self.train_set_fraction = train_set_fraction
         self.transform = nn.Sequential(
             transforms.Trim(left=trim_left),
-            transforms.BSpline(),
+            transforms.BSpline(15_000),
             transforms.STFT(n_fft),
             # transforms.MelSpectrogram(),
             transforms.PadToSize([stft_height, stft_width]),

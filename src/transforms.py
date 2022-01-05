@@ -25,13 +25,15 @@ class STFT(Module):
 
 
 class BSpline(Module):
-    def __init__(self) -> None:
+    def __init__(self, sr_thresh) -> None:
         self.bspline = BaselineAudioRegressor()
+        self.sr_thresh = sr_thresh
         super().__init__()
 
     def forward(self, x: torch.Tensor):
         waveform, sr = x
-        waveform = self.bspline.predict(waveform)
+        if sr < self.sr_thresh:
+            waveform = self.bspline.predict(waveform)
         return waveform, sr
 
 
