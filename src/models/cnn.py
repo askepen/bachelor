@@ -87,16 +87,19 @@ class LitCNN(pl.LightningModule):
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
+            nn.ReLU(),
             Conv2d(
                 mid_channels, mid_channels, self.kernel_size,
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
+            nn.ReLU(),
             Conv2d(
                 mid_channels, mid_channels, self.kernel_size,
                 padding=self.kernel_size // 2,
                 padding_mode="reflect",
             ),
+            nn.ReLU(),
         )
         self.last = Conv2d(mid_channels, out_channels, 1)
 
@@ -147,7 +150,7 @@ class LitCNN(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
-        loss = self.loss_fn(pred, y)
+        loss = torch.sqrt(self.loss_fn(pred, y))
         self.log(f"{step_name}_loss", loss)
         return loss
 
