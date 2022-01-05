@@ -55,7 +55,7 @@ class ImagePredictionLogger(Callback):
 
         x_imgs, imgs, y_audio, pred_audio = zip(*[
             [
-                get_wandb_image(x, x_sr, "Input"),
+                get_wandb_image(x, y_sr, "Input"),
                 get_wandb_image((y, pred), y_sr, "Actual / Prediction"),
                 get_wandb_audio(y, y_sr, self.n_fft),
                 get_wandb_audio(pred, y_sr, self.n_fft),
