@@ -44,13 +44,13 @@ class LitUnet(pl.LightningModule):
             self.block(in_channels, 128, 65, "down"),
             self.block(128, 256, 33, "down"),
             self.block(256, 512, 17, "down"),
-            self.block(512, 1024, 9, "down"),
+            self.block(512, 512, 9, "down"),
         ])
-        self.bottom = self.block(1024, 1024, 5, "bottom")
+        self.bottom = self.block(512, 512, 3, "bottom")
         self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
         self.up_blocks = torch.nn.ModuleList([
-            self.block(1024, 512, 5, "up", concat=True),
-            self.block(512, 256, 5, "up", concat=True),
+            self.block(512, 512, 3, "up", concat=True),
+            self.block(512, 256, 3, "up", concat=True),
             self.block(256, 128, 3, "up", concat=True),
             self.block(128, 64, 3, "up", concat=True),
         ])
