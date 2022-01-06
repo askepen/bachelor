@@ -37,23 +37,28 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
 
         # self.loss_fn = nn.MSELoss()
-        self.loss_fn = loss.MSLELoss()
-        self.down = MaxPool2d(2, ceil_mode=True)
+        # self.loss_fn = loss.MSLELoss()
+        self.loss_fn = loss.ComplexMSLELoss()
+
+        scale_factor = (2, 1)
+        self.down = MaxPool2d(scale_factor, ceil_mode=True)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 64, 33, "down"),
-            self.block(64, 128, 17, "down"),
-            self.block(128, 256, 9, "down"),
-            self.block(256, 512, 5, "down"),
+            self.block(in_channels, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
         ])
         self.up_blocks = nn.ModuleList([
-            self.block(512, 256, 3, "up"),
-            self.block(256, 128, 3, "up"),
-            self.block(128, 64, 3, "up"),
-            self.block(64, 64, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
         ])
         self.bottom = self.block(512, 512, 3, "bottom")
-        self.up = nn.UpsamplingBilinear2d(scale_factor=(2, 2))
-        self.out = Conv2d(64, out_channels, kernel_size=1)
+        self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
+        self.out = Conv2d(512, out_channels, kernel_size=1)
         self.save_hyperparameters()
 
     @staticmethod
@@ -104,9 +109,9 @@ class LitUnet(pl.LightningModule):
         # Convert real/imag axes to channels
         # x = x.permute(0, 3, 1, 2)
 
-        x = self.crop_width_height(x, [self.out_size[0]-1, self.out_size[1]])
-        x_subs = torch.split(x, round(x.shape[-2]/4), dim=2)
-        x = torch.cat(x_subs, dim=1)
+        # x = self.crop_width_height(x, [self.out_size[0]-1, self.out_size[1]])
+        # x_subs = torch.split(x, round(x.shape[-2]/4), dim=2)
+        # x = torch.cat(x_subs, dim=1)
 
         skip = []
 
@@ -125,8 +130,8 @@ class LitUnet(pl.LightningModule):
 
         x = self.out(x)
 
-        x_subs = torch.split(x, round(x.shape[1]/4), dim=1)
-        x = torch.cat(x_subs, dim=2)
+        # x_subs = torch.split(x, round(x.shape[1]/4), dim=1)
+        # x = torch.cat(x_subs, dim=2)
 
         x = self.crop_width_height(x, self.out_size)
 
@@ -143,6 +148,7 @@ class LitUnet(pl.LightningModule):
         """Generic code to run for each step in train/val/test"""
         (x, _), (y, _) = batch
         pred = self(x)
+
         loss = self.loss_fn(pred, y)
         # loss = torch.sqrt(loss)
         self.log(f"{step_name}_loss", loss)
