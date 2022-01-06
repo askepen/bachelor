@@ -42,23 +42,21 @@ class LitUnet(pl.LightningModule):
 
         scale_factor = (2, 1)
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
+        self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 512, 3, "down"),
+            self.block(in_channels, 128, 9, "down"),
+            self.block(128, 128, 5, "down"),
+            self.block(128, 512, 3, "down"),
             self.block(512, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
-        ])
-        self.up_blocks = nn.ModuleList([
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
         ])
         self.bottom = self.block(512, 512, 3, "bottom")
-        self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
-        self.out = Conv2d(512, out_channels, kernel_size=1)
+        self.up_blocks = nn.ModuleList([
+            self.block(512, 512, 3, "up"),
+            self.block(512, 128, 3, "up"),
+            self.block(128, 128, 3, "up"),
+            self.block(128, 8, 3, "up"),
+        ])
+        self.out = Conv2d(8, out_channels, kernel_size=3)
         self.save_hyperparameters()
 
     @staticmethod
@@ -83,7 +81,7 @@ class LitUnet(pl.LightningModule):
         conv = nn.Conv2d(
             in_channels,
             out_channels,
-            kernel_size=(kernel_height, 1),
+            kernel_size=(kernel_height, 3),
             padding="same",
             dilation=2 if direction == "down" else 1,
         )

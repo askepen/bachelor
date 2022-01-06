@@ -24,6 +24,18 @@ class ComplexMSLELoss(nn.Module):
         return self.msle(pred, actual)
 
 
+class MagnitudeMSELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, pred, actual):
+        """Assumes inputs are complex tensors, viewed as real"""
+        pred = torch.abs(torch.view_as_complex(pred))
+        actual = torch.abs(torch.view_as_complex(actual))
+        return self.mse(pred, actual)
+
+
 class RMSLELoss(nn.Module):
     def __init__(self):
         super().__init__()
