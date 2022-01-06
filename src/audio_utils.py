@@ -120,8 +120,10 @@ def plot_specgram(
         ax.set_ylim(ylim)
 
         ax.invert_yaxis()
-        ax.set_title(title)
+        # ax.set_title(title)
         ax.set_ylabel("Frequency [Hz]")
+
+    plt.title(title)
 
     if save_path is not None:
         plt.savefig(save_path, dpi=72)

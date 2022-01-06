@@ -155,15 +155,12 @@ class LitUnet(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        """Returns loss from single batch"""
         return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx) -> None:
-        """Logs validation loss"""
         return self._step(batch, batch_idx, "valid")
 
     def test_step(self, batch, batch_idx):
-        """Logs test loss"""
         return self._step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
