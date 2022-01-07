@@ -57,7 +57,7 @@ class LitUnet(pl.LightningModule):
             self.block(128, 128, 3, "up"),
             self.block(128, 8, 3, "up"),
         ])
-        self.out = Conv2d(8, out_channels, kernel_size=3)
+        self.out = Conv2d(8+1, out_channels, kernel_size=1)
         self.save_hyperparameters()
 
     @staticmethod
@@ -128,6 +128,8 @@ class LitUnet(pl.LightningModule):
             x = torch.cat((x, skip_connection), dim=1)
             x = block(x)
 
+        x = self.crop_width_height(x, self.out_size)
+
         # Merge input with output
         x = torch.cat((x_in, x), dim=1)
 
@@ -135,8 +137,6 @@ class LitUnet(pl.LightningModule):
 
         # x_subs = torch.split(x, round(x.shape[1]/4), dim=1)
         # x = torch.cat(x_subs, dim=2)
-
-        x = self.crop_width_height(x, self.out_size)
 
         # Convert channels to real/imag axes
         # x = x.permute(0, 2, 3, 1)
