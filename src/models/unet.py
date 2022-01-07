@@ -38,7 +38,8 @@ class LitUnet(pl.LightningModule):
 
         # self.loss_fn = nn.MSELoss()
         # self.loss_fn = loss.MSLELoss()
-        self.loss_fn = loss.ComplexMSLELoss()
+        # self.loss_fn = loss.ComplexMSLELoss()
+        self.loss_fn = loss.MagnitudeMSELoss()
 
         scale_factor = (2, 1)
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
@@ -104,18 +105,19 @@ class LitUnet(pl.LightningModule):
         # x = torch.cat([magnitude, phase], dim=1)
 
         x = x.unsqueeze(1)
+
+        x_in = x.clone()
         # Convert real/imag axes to channels
         # x = x.permute(0, 3, 1, 2)
 
         # x = self.crop_width_height(x, [self.out_size[0]-1, self.out_size[1]])
-        # x_subs = torch.split(x, round(x.shape[-2]/4), dim=2)
         # x = torch.cat(x_subs, dim=1)
 
         skip = []
 
         for block in self.down_blocks:
             x = block(x)
-            skip.append(x)
+            skip.append(x.clone())
             x = self.down(x)
         x = self.bottom(x)
 
@@ -125,6 +127,9 @@ class LitUnet(pl.LightningModule):
                 skip_connection, x.shape)
             x = torch.cat((x, skip_connection), dim=1)
             x = block(x)
+
+        # Merge input with output
+        x = torch.cat((x_in, x), dim=1)
 
         x = self.out(x)
 
@@ -147,6 +152,19 @@ class LitUnet(pl.LightningModule):
         (x, _), (y, _) = batch
         pred = self(x)
 
+        # pred_top = torch.view_as_real(
+        #     self.crop_width_height(
+        #         torch.view_as_complex(pred),
+        #         [round(self.out_size[0]*0.75), self.out_size[1]]
+        #     )
+        # )
+        # y_top = torch.view_as_real(
+        #     self.crop_width_height(
+        #         torch.view_as_complex(y),
+        #         [round(self.out_size[0]*0.75), self.out_size[1]]
+        #     )
+        # )
+        # loss = self.loss_fn(pred_top, y_top)
         loss = self.loss_fn(pred, y)
         # loss = torch.sqrt(loss)
         self.log(f"{step_name}_loss", loss)
