@@ -77,7 +77,7 @@ def plot_specgram(
     # spec_tensor = spec_tensor.detach().cpu()
     subplots = len(spec_tensor) if isinstance(spec_tensor, list) else 1
 
-    fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(12.5*subplots, 6))
+    fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(15, 6))
 
     if subplots == 1:
         spec_tensor = [spec_tensor]
