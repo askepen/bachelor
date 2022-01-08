@@ -38,7 +38,7 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
         self.n_fft = n_fft
 
-        self.loss_fn = nn.MSELoss()
+        self.loss_fn = nn.MSELoss(reduction="sum")
         # self.loss_fn = loss.MSLELoss()
         # self.loss_fn = loss.ComplexMSLELoss()
         # self.loss_fn = loss.MagnitudeMSELoss()
