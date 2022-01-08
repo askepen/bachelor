@@ -47,17 +47,17 @@ class LitUnet(pl.LightningModule):
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
         self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
+            self.block(in_channels, 16, 3, "down"),
+            self.block(16, 32, 3, "down"),
+            self.block(32, 64, 3, "down"),
+            self.block(64, 128, 3, "down"),
         ])
-        self.bottom = self.block(512, 512, 3, "bottom")
+        self.bottom = self.block(128, 128, 3, "bottom")
         self.up_blocks = nn.ModuleList([
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
-            self.block(512, 512, 3, "up"),
-            self.block(512, 2, 3, "up"),
+            self.block(128, 64, 3, "up"),
+            self.block(64, 32, 3, "up"),
+            self.block(32, 16, 3, "up"),
+            self.block(16, 2, 3, "up"),
         ])
         self.out = Conv2d(2+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
@@ -86,7 +86,7 @@ class LitUnet(pl.LightningModule):
             out_channels,
             kernel_size=(kernel_height, 1),
             padding="same",
-            dilation=int(out_channels/128) if direction == "down" else 1,
+            dilation=int(out_channels/16) if direction == "down" else 1,
         )
 
         if direction == "down":
@@ -116,11 +116,11 @@ class LitUnet(pl.LightningModule):
         for block in self.down_blocks:
             x = block(x)
             skip.append(x.clone())
-            x = self.down(x)
+            # x = self.down(x)
         x = self.bottom(x)
 
         for skip_connection, block in zip(skip[::-1], self.up_blocks):
-            x = self.up(x)
+            # x = self.up(x)
             skip_connection = self.crop_width_height(
                 skip_connection, x.shape)
             x = torch.cat((x, skip_connection), dim=1)
