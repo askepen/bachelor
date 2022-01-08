@@ -150,6 +150,24 @@ class Trim(Module):
         return waveform, sample_rate
 
 
+class TrimToSize(Module):
+    def __init__(self, seconds=None, sample_length=None) -> None:
+        self.seconds = seconds
+        self.sample_length = sample_length
+        super().__init__()
+
+    def forward(self, x):
+        x, sample_rate = x
+        if self.seconds is not None:
+            sample_length = self.seconds * sample_rate
+        elif self.sample_length is not None:
+            sample_length = self.sample_length
+        x_diff = sample_length - x.shape[-1]
+        x = x.squeeze()
+        x = F.pad(x, pad=[0, x_diff], value=0.0)
+        return x, sample_rate
+
+
 class ViewAsReal(Module):
     """Represents complex type as [real, img]."""
 

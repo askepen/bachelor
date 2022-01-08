@@ -75,7 +75,7 @@ def plot_specgram(
     calling (`plt.close(fig)`) once it's no longer needed.
     """
     # spec_tensor = spec_tensor.detach().cpu()
-    subplots = 2 if isinstance(spec_tensor, tuple) else 1
+    subplots = 2 if isinstance(spec_tensor, list) else 1
 
     fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(12.5, 6))
 
