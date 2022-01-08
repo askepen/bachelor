@@ -13,35 +13,26 @@ class LitFullyConnected(pl.LightningModule):
         lr,
         momentum,
         optim,
+        n_fft,
         **kwargs,
     ):
         super().__init__()
         self.optim = optim
         self.lr = lr
         self.momentum = momentum
+        self.n_fft = n_fft
         self.real_layers = self.linear_layers(stft_height)
         # self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = loss.RMSLELoss()
+        self.loss_fn = nn.MSELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
         return nn.Sequential(
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
             nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
-            nn.Linear(stft_height*4, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*8), nn.LeakyReLU(),
-            nn.Linear(stft_height*8, stft_height*4), nn.LeakyReLU(),
+            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
-            nn.Linear(stft_height*2, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.LeakyReLU(),
-            nn.Linear(stft_height*1, stft_height*1), nn.ReLU(),
+            nn.Linear(stft_height*2, stft_height*1),
         )
 
     @staticmethod
@@ -60,22 +51,12 @@ class LitFullyConnected(pl.LightningModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(device=self.device)
-        x = torch.view_as_complex(x)
+
+        out_size = x.shape[-2:]
+        x = torch.stft(x, self.n_fft, return_complex=True)
 
         phase = torch.angle(x)
         x = torch.abs(x)
-
-        # x_real, x_imag = [
-        #     torch.cat([
-        #         layer(chunk.squeeze(-1)).unsqueeze(-1)
-        #         for chunk in torch.split(axes, 1, -1)
-        #     ], -1)
-        #     for axes, layer in [
-        #         (x.real, self.real_layers),
-        #         (x.imag, self.imag_layers),
-        #     ]
-        # ]
-        # x = torch.complex(x_real, x_imag)
 
         x = torch.cat([
             self.real_layers(chunk.squeeze(-1)).unsqueeze(-1)
@@ -83,7 +64,9 @@ class LitFullyConnected(pl.LightningModule):
         ], -1)
 
         x = torch.polar(x, phase)
-        x = torch.view_as_real(x)
+        x = torch.istft(x, self.n_fft)
+        x = self.crop_width_height(x, out_size)
+
         return x
 
     def _step(self, batch, batch_idx, step_name):
