@@ -88,7 +88,6 @@ class LitUnet(pl.LightningModule):
         )
 
         if direction == "down":
-            print(int(out_channels/128))
             post = nn.LeakyReLU(0.2)
         elif direction == "bottom":
             post = nn.Sequential(nn.Dropout2d(), nn.LeakyReLU(0.2))
