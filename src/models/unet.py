@@ -45,19 +45,19 @@ class LitUnet(pl.LightningModule):
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
         self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 3, 9, "down"),
-            self.block(128, 128, 3, "down"),
-            self.block(128, 512, 3, "down"),
-            self.block(512, 512, 3, "down"),
+            self.block(in_channels, 128, 3, "down"),
+            self.block(128, 256, 3, "down"),
+            self.block(256, 512, 3, "down"),
+            self.block(512, 1024, 3, "down"),
         ])
-        self.bottom = self.block(512, 512, 3, "bottom")
+        self.bottom = self.block(1024, 1024, 3, "bottom")
         self.up_blocks = nn.ModuleList([
-            self.block(512, 512, 3, "up"),
-            self.block(512, 128, 3, "up"),
-            self.block(128, 128, 3, "up"),
-            self.block(128, 8, 3, "up"),
+            self.block(1024, 512, 3, "up"),
+            self.block(512, 256, 3, "up"),
+            self.block(256, 128, 3, "up"),
+            self.block(128, 64, 3, "up"),
         ])
-        self.out = Conv2d(8+1, out_channels, kernel_size=1)
+        self.out = Conv2d(64+1, out_channels, kernel_size=1)
         self.save_hyperparameters()
 
     @staticmethod
@@ -86,7 +86,9 @@ class LitUnet(pl.LightningModule):
             padding="same",
             dilation=int(out_channels/128) if direction == "down" else 1,
         )
+
         if direction == "down":
+            print(int(out_channels/128))
             post = nn.LeakyReLU(0.2)
         elif direction == "bottom":
             post = nn.Sequential(nn.Dropout2d(), nn.LeakyReLU(0.2))
