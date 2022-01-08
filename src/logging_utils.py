@@ -13,7 +13,7 @@ def get_wandb_image(x, sr, name, n_fft=None):
 
     if not isinstance(x, list):
         x = [x]
-    x = [torch.stft(x_sub, n_fft, return_complex=True) for x_sub in x]
+    x = [torch.stft(x_sub, n_fft, return_complex=False) for x_sub in x]
     fig = audio_utils.plot_specgram(
         x,
         sr,
