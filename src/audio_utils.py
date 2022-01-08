@@ -61,6 +61,7 @@ def plot_specgram(
     ylim_freq=None,
     save_path=None,
     return_fig=False,
+    sub_titles=None,
 ):
     """
     Plots a spectrogram given a tensor with shape [1, B, N, 2].
@@ -76,6 +77,7 @@ def plot_specgram(
     """
     # spec_tensor = spec_tensor.detach().cpu()
     subplots = len(spec_tensor) if isinstance(spec_tensor, list) else 1
+    sub_titles = sub_titles or [""]*subplots
 
     fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(15, 6))
 
@@ -95,21 +97,25 @@ def plot_specgram(
 
     vmin = spec_tensor[0].min().item()
     vmax = spec_tensor[0].max().item()
-    first_plot = True
-    for spec, ax in zip(spec_tensor, axes):
+
+    for i, (spec, ax, sub_title) in enumerate(zip(spec_tensor, axes, sub_titles)):
         spec = spec.squeeze()
 
-        sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
-                    cmap="gist_heat")
+        sns.heatmap(
+            spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
+            cmap="gist_heat",
+            yticklabels=i == 0,
+        )
 
         # Set y-ticks to frequencies in Hz. Computed using the
         # implementation of librosa.fft_frequencies:
         # https://librosa.org/doc/latest/_modules/librosa/core/convert.html#fft_frequencies
-        freqs = np.linspace(0, float(sample_rate) / 2,
-                            1 + n_fft // 2, dtype=np.int)
-        ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
-        ax.set_yticks(ytick_idx)
-        ax.set_yticklabels(freqs[ytick_idx])
+        if i == 0:
+            freqs = np.linspace(0, float(sample_rate) / 2,
+                                1 + n_fft // 2, dtype=np.int)
+            ytick_idx = np.linspace(0, len(freqs) - 1, n_yticks, dtype=np.int)
+            ax.set_yticks(ytick_idx)
+            ax.set_yticklabels(freqs[ytick_idx])
 
         # Set upper y-limit given a frequency in Hz
         if ylim_freq is None:
@@ -121,12 +127,9 @@ def plot_specgram(
         ax.set_ylim(ylim)
 
         ax.invert_yaxis()
-
-        if first_plot:
+        ax.set_title(sub_title)
+        if i == 0:
             ax.set_ylabel("Frequency [Hz]")
-            first_plot = False
-        else:
-            ax.set(yticklabels=[])
 
     plt.suptitle(title)
 

@@ -20,7 +20,7 @@ def get_wandb_image(x, sr, name, n_fft=None):
         n_fft=n_fft,
         ylim_freq=None,
         n_yticks=13,
-        title=name,
+        sub_titles=name,
         return_fig=True,
     )
     img = wandb.Image(fig)
@@ -60,7 +60,9 @@ class ImagePredictionLogger(Callback):
 
         imgs, x_audio, y_audio, pred_audio = zip(*[
             [
-                get_wandb_image([x, y, pred], y_sr, "Actual / Prediction"),
+                get_wandb_image([x, y, pred], y_sr, [
+                    "Compressed", "Target", "Prediction"
+                ]),
                 get_wandb_audio(x, y_sr, self.n_fft),
                 get_wandb_audio(y, y_sr, self.n_fft),
                 get_wandb_audio(pred, y_sr, self.n_fft),
