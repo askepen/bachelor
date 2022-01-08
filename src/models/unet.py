@@ -38,8 +38,8 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
         self.n_fft = n_fft
 
-        self.loss_fn = nn.MSELoss()
-        # self.loss_fn = loss.MSLELoss()
+        # self.loss_fn = nn.MSELoss()
+        self.loss_fn = loss.MSLELoss()
         # self.loss_fn = loss.ComplexMSLELoss()
         # self.loss_fn = loss.MagnitudeMSELoss()
 
@@ -147,7 +147,7 @@ class LitUnet(pl.LightningModule):
         (x, _), (y, _) = batch
         pred = self(x)
         loss = self.loss_fn(pred, y)
-        loss = torch.sqrt(loss)
+        # loss = torch.sqrt(loss)
         self.log(f"{step_name}_loss", loss)
         return loss
 
