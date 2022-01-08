@@ -75,9 +75,9 @@ def plot_specgram(
     calling (`plt.close(fig)`) once it's no longer needed.
     """
     # spec_tensor = spec_tensor.detach().cpu()
-    subplots = 2 if isinstance(spec_tensor, list) else 1
+    subplots = len(spec_tensor) if isinstance(spec_tensor, list) else 1
 
-    fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(12.5, 6))
+    fig, axes = plt.subplots(1, subplots, dpi=72, figsize=(12.5*subplots, 6))
 
     if subplots == 1:
         spec_tensor = [spec_tensor]
@@ -95,9 +95,10 @@ def plot_specgram(
 
     vmin = spec_tensor[0].min().item()
     vmax = spec_tensor[0].max().item()
-
+    first_plot = True
     for spec, ax in zip(spec_tensor, axes):
         spec = spec.squeeze()
+
         sns.heatmap(spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
                     cmap="gist_heat")
 
@@ -120,10 +121,14 @@ def plot_specgram(
         ax.set_ylim(ylim)
 
         ax.invert_yaxis()
-        # ax.set_title(title)
-        ax.set_ylabel("Frequency [Hz]")
 
-    plt.title(title)
+        if first_plot:
+            ax.set_ylabel("Frequency [Hz]")
+            first_plot = False
+        else:
+            ax.set(yticklabels=[])
+
+    plt.suptitle(title)
 
     if save_path is not None:
         plt.savefig(save_path, dpi=72)
