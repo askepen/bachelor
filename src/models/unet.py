@@ -57,9 +57,9 @@ class LitUnet(pl.LightningModule):
             self.block(512, 512, 3, "up"),
             self.block(512, 512, 3, "up"),
             self.block(512, 512, 3, "up"),
-            self.block(512, 1, 3, "up"),
+            self.block(512, 2, 3, "up"),
         ])
-        self.out = Conv2d(1+1, out_channels, kernel_size=1, padding="same")
+        self.out = Conv2d(2+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
 
     @staticmethod
