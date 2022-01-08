@@ -84,7 +84,7 @@ class LitUnet(pl.LightningModule):
         conv = nn.Conv2d(
             in_channels,
             out_channels,
-            kernel_size=(kernel_height, 1),
+            kernel_size=(kernel_height, 3),
             padding="same",
             dilation=int(out_channels/16) if direction == "down" else 1,
         )
