@@ -38,8 +38,8 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
         self.n_fft = n_fft
 
-        # self.loss_fn = nn.MSELoss()
-        self.loss_fn = loss.MSLELoss()
+        self.loss_fn = nn.MSELoss()
+        # self.loss_fn = loss.MSLELoss()
         # self.loss_fn = loss.ComplexMSLELoss()
         # self.loss_fn = loss.MagnitudeMSELoss()
 
@@ -47,19 +47,19 @@ class LitUnet(pl.LightningModule):
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
         self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 128, 3, "down"),
-            self.block(128, 256, 3, "down"),
-            self.block(256, 512, 3, "down"),
-            self.block(512, 1024, 3, "down"),
+            self.block(in_channels, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
+            self.block(512, 512, 3, "down"),
         ])
-        self.bottom = self.block(1024, 1024, 3, "bottom")
+        self.bottom = self.block(512, 512, 3, "bottom")
         self.up_blocks = nn.ModuleList([
-            self.block(1024, 512, 3, "up"),
-            self.block(512, 256, 3, "up"),
-            self.block(256, 128, 3, "up"),
-            self.block(128, 64, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 512, 3, "up"),
+            self.block(512, 1, 3, "up"),
         ])
-        self.out = Conv2d(64+1, out_channels, kernel_size=1, padding="same")
+        self.out = Conv2d(1+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
 
     @staticmethod
