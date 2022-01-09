@@ -31,6 +31,8 @@ class LitFullyConnected(pl.LightningModule):
             nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
+            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
+            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
             nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
             nn.Linear(stft_height*2, stft_height*1),
         )
@@ -53,7 +55,7 @@ class LitFullyConnected(pl.LightningModule):
         x = x.to(device=self.device)
 
         out_size = x.shape[-2:]
-        x = torch.stft(x, self.n_fft, return_complex=True)
+        # x = torch.stft(x, self.n_fft, return_complex=True)
 
         phase = torch.angle(x)
         x = torch.abs(x)
@@ -64,7 +66,7 @@ class LitFullyConnected(pl.LightningModule):
         ], -1)
 
         x = torch.polar(x, phase)
-        x = torch.istft(x, self.n_fft)
+        # x = torch.istft(x, self.n_fft)
         x = self.crop_width_height(x, out_size)
 
         return x

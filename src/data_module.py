@@ -31,11 +31,11 @@ class CompressedAudioDataModule(LightningDataModule):
         self.transform = nn.Sequential(
             transforms.Trim(left=trim_left),
             transforms.BSpline(15_000),
-            transforms.TrimToSize(sample_length=48_000),
-            # transforms.STFT(n_fft),
-            # transforms.PadToSize([stft_height, stft_width]),
-            # transforms.ViewAsReal(),
-            transforms.DropSampleRate(),
+            # transforms.TrimToSize(sample_length=48_000),
+            # transforms.DropSampleRate(),
+            transforms.STFT(n_fft),
+            transforms.PadToSize([stft_height, stft_width]),
+            transforms.ViewAsReal(),
         )
 
     @staticmethod
