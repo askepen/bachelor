@@ -54,12 +54,12 @@ class LitUnet(pl.LightningModule):
         ])
         self.bottom = self.block(512, 512, 9, "bottom")
         self.up_blocks = nn.ModuleList([
-            self.block(512, 256, 9, "up"),
-            self.block(256, 128, 9, "up"),
-            self.block(128, 64, 9, "up"),
-            self.block(64, 64, 9, "up"),
+            self.block(1024, 512, 9, "up"),
+            self.block(1024, 512, 9, "up"),
+            self.block(1024, 512, 9, "up"),
+            self.block(1024, 1, 9, "up"),
         ])
-        self.out = nn.Conv1d(64+1, out_channels, kernel_size=1, padding="same")
+        self.out = nn.Conv1d(1+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
 
     @staticmethod
@@ -80,7 +80,7 @@ class LitUnet(pl.LightningModule):
         return parent_parser
 
     def block(self, in_channels, out_channels, kernel_height, direction):
-        in_channels = 2*in_channels if direction == "up" else in_channels
+        # in_channels = 2*in_channels if direction == "up" else in_channels
         conv = nn.Conv1d(
             in_channels,
             out_channels,
