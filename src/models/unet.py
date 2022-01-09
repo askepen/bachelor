@@ -134,7 +134,7 @@ class LitUnet(pl.LightningModule):
         x = torch.cat((x_in, x), dim=1)
         x = self.out(x)
 
-        # x = x.squeeze(1)
+        x = x.squeeze()
         # x = torch.polar(x, phase)
         # x = torch.istft(x, self.n_fft)
 
