@@ -9,11 +9,10 @@ from torchaudio import transforms as T
 
 def get_wandb_image(x, sr, name, n_fft=None):
     sr = sr.item()
-    n_fft = n_fft or sr // (2 ** 5)
 
-    if not isinstance(x, list):
-        x = [x]
-    x = [torch.stft(x_sub, n_fft, return_complex=False) for x_sub in x]
+    # if not isinstance(x, list):
+    #     x = [x]
+    # x = [torch.stft(x_sub, n_fft, return_complex=False) for x_sub in x]
     fig = audio_utils.plot_specgram(
         x,
         sr,
@@ -29,12 +28,10 @@ def get_wandb_image(x, sr, name, n_fft=None):
 
 
 def get_wandb_audio(x, sr, n_fft=None):
-    # sr = sr.item()
-    # n_fft = n_fft or sr // (2 ** 5)
-    # x = torch.view_as_complex(x.contiguous())
-
-    # waveform = torch.istft(x, n_fft).detach().cpu()
-    waveform = x
+    sr = sr.item()
+    x = torch.view_as_complex(x.contiguous())
+    waveform = torch.istft(x, n_fft).detach().cpu()
+    # waveform = x
     return wandb.Audio(waveform.numpy(), sr)
 
 
@@ -62,7 +59,7 @@ class ImagePredictionLogger(Callback):
             [
                 get_wandb_image([x, y, pred], y_sr, [
                     "Compressed", "Target", "Prediction"
-                ]),
+                ], self.n_fft),
                 get_wandb_audio(x, y_sr, self.n_fft),
                 get_wandb_audio(y, y_sr, self.n_fft),
                 get_wandb_audio(pred, y_sr, self.n_fft),
