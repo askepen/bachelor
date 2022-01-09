@@ -38,12 +38,12 @@ class LitUnet(pl.LightningModule):
         self.betas = (b1, b2)
         self.n_fft = n_fft
 
-        self.loss_fn = nn.MSELoss(reduction="sum")
+        self.loss_fn = nn.MSELoss()
         # self.loss_fn = loss.MSLELoss()
         # self.loss_fn = loss.ComplexMSLELoss()
         # self.loss_fn = loss.MagnitudeMSELoss()
 
-        scale_factor = (2, 1)
+        scale_factor = 2
         self.down = MaxPool2d(scale_factor, ceil_mode=True)
         self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
@@ -59,7 +59,7 @@ class LitUnet(pl.LightningModule):
             self.block(32, 16, 3, "up"),
             self.block(16, 2, 3, "up"),
         ])
-        self.out = Conv2d(2+1, out_channels, kernel_size=1, padding="same")
+        self.out = nn.Conv1d(2+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
 
     @staticmethod
@@ -81,10 +81,10 @@ class LitUnet(pl.LightningModule):
 
     def block(self, in_channels, out_channels, kernel_height, direction):
         in_channels = 2*in_channels if direction == "up" else in_channels
-        conv = nn.Conv2d(
+        conv = nn.Conv1d(
             in_channels,
             out_channels,
-            kernel_size=(kernel_height, 3),
+            kernel_size=kernel_height,
             padding="same",
             dilation=int(out_channels/16) if direction == "down" else 1,
         )
@@ -94,7 +94,8 @@ class LitUnet(pl.LightningModule):
         elif direction == "bottom":
             post = nn.Sequential(nn.Dropout2d(), nn.LeakyReLU(0.2))
         else:
-            post = nn.Sequential(nn.Dropout2d(), nn.ReLU())
+            post = nn.Sequential(
+                nn.Dropout2d(), nn.ReLU())
         return nn.Sequential(conv, post)
 
     def crop_width_height(self, x, shape_to_match):
@@ -105,9 +106,9 @@ class LitUnet(pl.LightningModule):
 
         out_size = x.shape[-2:]
 
-        x = x.squeeze()
-        x = torch.stft(x, self.n_fft, return_complex=True)
-        x, phase = torch.abs(x), torch.angle(x)
+        # x = x.squeeze()
+        # x = torch.stft(x, self.n_fft, return_complex=True)
+        # x, phase = torch.abs(x), torch.angle(x)
         x = x.unsqueeze(1)
         x_in = x.clone()
 
@@ -127,17 +128,17 @@ class LitUnet(pl.LightningModule):
             x = block(x)
 
         # x = self.crop_width_height(x, self.out_size)
-        x = self.crop_width_height(x, x_in.shape[-2:])
+        # x = self.crop_width_height(x, x_in.shape[-2:])
 
         # Merge input with output
         x = torch.cat((x_in, x), dim=1)
         x = self.out(x)
 
-        x = x.squeeze(1)
-        x = torch.polar(x, phase)
-        x = torch.istft(x, self.n_fft)
+        # x = x.squeeze(1)
+        # x = torch.polar(x, phase)
+        # x = torch.istft(x, self.n_fft)
 
-        x = self.crop_width_height(x, out_size)
+        # x = self.crop_width_height(x, out_size)
         # x = torch.view_as_real(x)
 
         return x

@@ -10,9 +10,9 @@ from torchaudio import transforms as T
 def get_wandb_image(x, sr, name, n_fft=None):
     sr = sr.item()
 
-    # if not isinstance(x, list):
-    #     x = [x]
-    # x = [torch.stft(x_sub, n_fft, return_complex=False) for x_sub in x]
+    if not isinstance(x, list):
+        x = [x]
+    x = [torch.stft(x_sub, n_fft, return_complex=False) for x_sub in x]
     fig = audio_utils.plot_specgram(
         x,
         sr,
@@ -29,9 +29,10 @@ def get_wandb_image(x, sr, name, n_fft=None):
 
 def get_wandb_audio(x, sr, n_fft=None):
     sr = sr.item()
-    x = torch.view_as_complex(x.contiguous())
-    waveform = torch.istft(x, n_fft).detach().cpu()
-    # waveform = x
+    # x = torch.view_as_complex(x.contiguous())
+    # waveform = torch.istft(x, n_fft).detach().cpu()
+    x = x.squeeze()
+    waveform = x
     return wandb.Audio(waveform.numpy(), sr)
 
 
