@@ -47,19 +47,19 @@ class LitUnet(pl.LightningModule):
         self.down = nn.MaxPool1d(scale_factor, ceil_mode=True)
         self.up = nn.Upsample(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
-            self.block(in_channels, 16, 3, "down"),
-            self.block(16, 32, 3, "down"),
-            self.block(32, 64, 3, "down"),
-            self.block(64, 128, 3, "down"),
+            self.block(in_channels, 64, 65, "down"),
+            self.block(64, 128, 33, "down"),
+            self.block(128, 256, 17, "down"),
+            self.block(256, 512, 9, "down"),
         ])
-        self.bottom = self.block(128, 128, 3, "bottom")
+        self.bottom = self.block(512, 512, 9, "bottom")
         self.up_blocks = nn.ModuleList([
-            self.block(128, 64, 3, "up"),
-            self.block(64, 32, 3, "up"),
-            self.block(32, 16, 3, "up"),
-            self.block(16, 2, 3, "up"),
+            self.block(512, 256, 9, "up"),
+            self.block(256, 128, 9, "up"),
+            self.block(128, 64, 9, "up"),
+            self.block(64, 64, 9, "up"),
         ])
-        self.out = nn.Conv1d(2+1, out_channels, kernel_size=1, padding="same")
+        self.out = nn.Conv1d(64+1, out_channels, kernel_size=1, padding="same")
         self.save_hyperparameters()
 
     @staticmethod
