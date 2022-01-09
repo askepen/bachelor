@@ -54,9 +54,9 @@ class LitFullyConnected(pl.LightningModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(device=self.device)
 
-        out_size = x.shape[-2:]
         # x = torch.stft(x, self.n_fft, return_complex=True)
-
+        x = torch.view_as_complex(x)
+        # out_size = x.shape[-2:]
         phase = torch.angle(x)
         x = torch.abs(x)
 
@@ -67,8 +67,8 @@ class LitFullyConnected(pl.LightningModule):
 
         x = torch.polar(x, phase)
         # x = torch.istft(x, self.n_fft)
-        x = self.crop_width_height(x, out_size)
-
+        # x = self.crop_width_height(x, out_size)
+        x = torch.view_as_real(x)
         return x
 
     def _step(self, batch, batch_idx, step_name):
