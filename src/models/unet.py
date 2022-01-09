@@ -44,8 +44,8 @@ class LitUnet(pl.LightningModule):
         # self.loss_fn = loss.MagnitudeMSELoss()
 
         scale_factor = 2
-        self.down = MaxPool2d(scale_factor, ceil_mode=True)
-        self.up = nn.UpsamplingBilinear2d(scale_factor=scale_factor)
+        self.down = nn.MaxPool1d(scale_factor, ceil_mode=True)
+        self.up = nn.Upsample(scale_factor=scale_factor)
         self.down_blocks = nn.ModuleList([
             self.block(in_channels, 16, 3, "down"),
             self.block(16, 32, 3, "down"),
@@ -86,7 +86,7 @@ class LitUnet(pl.LightningModule):
             out_channels,
             kernel_size=kernel_height,
             padding="same",
-            dilation=int(out_channels/16) if direction == "down" else 1,
+            # dilation=int(out_channels/16) if direction == "down" else 1,
         )
 
         if direction == "down":
@@ -117,11 +117,11 @@ class LitUnet(pl.LightningModule):
         for block in self.down_blocks:
             x = block(x)
             skip.append(x.clone())
-            # x = self.down(x)
+            x = self.down(x)
         x = self.bottom(x)
 
         for skip_connection, block in zip(skip[::-1], self.up_blocks):
-            # x = self.up(x)
+            x = self.up(x)
             skip_connection = self.crop_width_height(
                 skip_connection, x.shape)
             x = torch.cat((x, skip_connection), dim=1)
