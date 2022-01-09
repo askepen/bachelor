@@ -21,21 +21,25 @@ class LitFullyConnected(pl.LightningModule):
         self.lr = lr
         self.momentum = momentum
         self.n_fft = n_fft
-        self.real_layers = self.linear_layers(stft_height)
+        self.first_layers = nn.ModuleList([
+            self.layer(stft_height*1, stft_height*2),
+            self.layer(stft_height*2, stft_height*2),
+            self.layer(stft_height*2, stft_height*2),
+        ])
+        self.last_layers = nn.ModuleList([
+            self.layer(stft_height*4, stft_height*2),
+            self.layer(stft_height*4, stft_height*2),
+            self.layer(stft_height*4, stft_height*1, activation=False),
+        ])
         # self.loss_fn = nn.MSELoss()
         self.loss_fn = loss.MagnitudeMSELoss()
         self.save_hyperparameters()
 
-    def linear_layers(self, stft_height):
-        return nn.Sequential(
-            nn.Linear(stft_height*1, stft_height*2), nn.LeakyReLU(),
-            nn.Linear(stft_height*2, stft_height*4), nn.LeakyReLU(),
-            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
-            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
-            nn.Linear(stft_height*4, stft_height*4), nn.LeakyReLU(),
-            nn.Linear(stft_height*4, stft_height*2), nn.LeakyReLU(),
-            nn.Linear(stft_height*2, stft_height*1),
-        )
+    def layer(self, in_layers, out_layers, activation=True):
+        if activation:
+            return nn.Sequential(nn.Linear(in_layers, out_layers), nn.LeakyReLU())
+        else:
+            return nn.Sequential(nn.Linear(in_layers, out_layers))
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -60,10 +64,21 @@ class LitFullyConnected(pl.LightningModule):
         phase = torch.angle(x)
         x = torch.abs(x)
 
-        x = torch.cat([
-            self.real_layers(chunk.squeeze(-1)).unsqueeze(-1)
-            for chunk in torch.split(x, 1, -1)
-        ], -1)
+        def forward(x):
+            x = x.squeeze(-1)
+            skip = []
+            for layer in self.first_layers:
+                x = layer(x)
+                skip.append(x.clone())
+
+            for layer, x_skip in zip(self.last_layers, skip[::-1]):
+                x = torch.cat([x, x_skip], dim=-1)
+                x = layer(x)
+
+            x = x.unsqueeze(-1)
+            return x
+
+        x = torch.cat([forward(chunk) for chunk in torch.split(x, 1, -1)], -1)
 
         x = torch.polar(x, phase)
         # x = torch.istft(x, self.n_fft)
