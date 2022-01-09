@@ -95,7 +95,7 @@ class LitUnet(pl.LightningModule):
             post = nn.Sequential(nn.Dropout2d(), nn.LeakyReLU(0.2))
         else:
             post = nn.Sequential(
-                nn.Dropout2d(), nn.ReLU())
+                nn.Dropout2d(), nn.LeakyReLU(0.2))
         return nn.Sequential(conv, post)
 
     def crop_width_height(self, x, shape_to_match):
