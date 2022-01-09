@@ -22,8 +22,8 @@ class LitFullyConnected(pl.LightningModule):
         self.momentum = momentum
         self.n_fft = n_fft
         self.real_layers = self.linear_layers(stft_height)
-        # self.imag_layers = self.linear_layers(stft_height)
-        self.loss_fn = nn.MSELoss()
+        # self.loss_fn = nn.MSELoss()
+        self.loss_fn = loss.MagnitudeMSELoss()
         self.save_hyperparameters()
 
     def linear_layers(self, stft_height):
@@ -80,15 +80,12 @@ class LitFullyConnected(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx) -> torch.Tensor:
-        """Returns loss from single batch"""
         return self._step(batch, batch_idx, "train")
 
     def validation_step(self, batch, batch_idx) -> None:
-        """Logs validation loss"""
         return self._step(batch, batch_idx, "valid")
 
     def test_step(self, batch, batch_idx):
-        """Logs test loss"""
         return self._step(batch, batch_idx, "test")
 
     def configure_optimizers(self):
