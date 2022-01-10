@@ -102,7 +102,7 @@ def plot_specgram(
         spec = spec.squeeze()
 
         sns.heatmap(
-            spec, ax=ax, vmin=vmin, vmax=vmax,  # norm=LogNorm(),
+            spec, ax=ax, vmin=vmin, vmax=vmax,  norm=LogNorm(),
             cmap="gist_heat",
             yticklabels=i == 0,
         )
