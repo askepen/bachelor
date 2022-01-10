@@ -160,7 +160,8 @@ class CompressedAudioDataset(Dataset):
 
     def __len__(self):
         dir = os.path.join(self.data_path_wav)
-        return len(os.listdir(dir))
+        # return len(os.listdir(dir))
+        return len([1 for file_name in os.listdir(dir) if "p237_" in file_name])
 
     def _wav_filenames(self):
         return os.listdir(self.data_path_wav)
@@ -175,7 +176,7 @@ class CompressedAudioDataset(Dataset):
                 os.path.join(self.data_path_gsm, file_name),
                 os.path.join(self.data_path_wav, file_name),
             )
-            for file_name in self._wav_filenames()
+            for file_name in self._wav_filenames() if "p237_" in file_name
         ]
 
     def __getitem__(self, index) -> Tuple[Tuple[torch.Tensor, int]]:
